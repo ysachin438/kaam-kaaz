@@ -10,9 +10,17 @@ export class TaskServices {
 
     constructor(@InjectRepository(tasks) private taskRepo: Repository<tasks>) { }
 
-    async findAllTasks(id) {
-        const tasklist = await this.taskRepo.find({ where: { userId: id } })
-        return tasklist
+    async findAllTasks(id: number, status?: string) {
+        if (status && !['inprogress', 'pending', 'completed'].includes(status)) {
+            return [];
+        }
+        
+        const whereClause = status 
+            ? { userId: id, status: status as 'inprogress' | 'pending' | 'completed' }
+            : { userId: id };
+            
+        const tasklist = await this.taskRepo.find({ where: whereClause });
+        return tasklist;
     }
 
     async getTaskById(userId: number, taskId: number) {
