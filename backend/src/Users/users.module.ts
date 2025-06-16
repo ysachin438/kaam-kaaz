@@ -5,13 +5,20 @@ import { AuthMiddleware, secondMiddleware } from "./middlewares/auth.middleware"
 import { TaskServices } from "./services/task.service";
 import { TaskController } from "./controllers/task.controller";
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { users} from "./entitys/user.entity"
-import { tasks } from "./entitys/task.entity";
+import { users} from "./entities/user.entity"
+import { tasks } from "./entities/task.entity";
+import { JwtModule } from "@nestjs/jwt";
+import { AuthModule } from "./auth.module";
+import { jwtConfig } from '../config/jwt.config';
+
 @Module({
-    imports: [TypeOrmModule.forFeature([users, tasks])],
+    imports: [
+        TypeOrmModule.forFeature([users, tasks]), 
+        AuthModule,
+        JwtModule.register(jwtConfig)
+    ],
     controllers: [UserController, TaskController],
     providers: [UserServices, TaskServices]
-
 })
 export class UserModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {

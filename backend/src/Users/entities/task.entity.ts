@@ -8,10 +8,16 @@ export class tasks {
     userId: number
 
     @Column({ type: "varchar" })
+    title: string
+
+    @Column({ type: "varchar" })
     description: string
 
-    @Column({ type: "enum", enum: ['start', 'pending', 'completed'], default: 'pending' })
-    status: 'start' | 'pending' | 'completed'
+    @Column({ type: "enum", enum: ['inprogress', 'pending', 'completed'], default: 'pending' })
+    status: 'inprogress' | 'pending' | 'completed'
+
+    @Column({ type: "enum", enum: ['high', 'medium', 'low'], default: 'medium' })
+    priority: 'high' | 'medium' | 'low'
 
     @CreateDateColumn({ type: 'timestamp' })
     createdAt: Date;
@@ -19,6 +25,6 @@ export class tasks {
     @UpdateDateColumn({ type: 'timestamp' })
     updatedAt: Date;
 
-    // @Column({ type: "datetime" })
-    // due_date: Timestamp
+    @Column({ type: "datetime" })
+    due_date: Timestamp
 }

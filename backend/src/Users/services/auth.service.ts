@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { users } from "../entitys/user.entity";
+import { users } from "../entities/user.entity";
 import { CreateUserDto, UserDataDto } from "../dtos/userdto.dto";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt"
@@ -29,7 +29,7 @@ export class AuthServices {
         }
 
     }
-    
+
     async signup(userData: CreateUserDto) {
         try{
 

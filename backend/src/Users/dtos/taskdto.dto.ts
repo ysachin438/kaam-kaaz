@@ -1,11 +1,22 @@
-import { IsNotEmpty, IsNumber, IsOptional } from "class-validator";
+import { IsNotEmpty, IsOptional } from "class-validator";
 
-export class createTaskDto{
+export class createTaskDto {
     @IsNotEmpty()
     @IsOptional()
-    Description?: string
+    title?: string
     
     @IsNotEmpty()
     @IsOptional()
-    status?: 'start' | 'pending' | 'completed'
+    description?: string
+
+    @IsNotEmpty()
+    @IsOptional()
+    status?: 'inprogress' | 'pending' | 'completed'
+
+    @IsNotEmpty()
+    @IsOptional()
+    priority?: 'high' | 'medium' | 'low'
+
+    @IsOptional()
+    due_date?: Date
 }

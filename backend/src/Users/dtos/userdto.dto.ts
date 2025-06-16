@@ -1,6 +1,7 @@
-import { isEmail, IsEmail, IsIn, IsNotEmpty, isNotEmpty, IsOptional, MinLength } from 'class-validator'
+import { isEmail, IsEmail, IsIn, IsNotEmpty, isNotEmpty, IsNumber, IsOptional, MinLength } from 'class-validator'
 export class UserDataDto {
-
+    @IsNumber()
+    userId: number
     @IsNotEmpty()
     name: string
 

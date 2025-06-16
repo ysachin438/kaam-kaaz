@@ -21,6 +21,12 @@ import {
   Box,
   Chip,
   Popover,
+  Checkbox,
+  Tabs,
+  Tab,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
@@ -47,6 +53,7 @@ const TaskItem = styled(ListItem)(({ theme }) => ({
   padding: theme.spacing(2),
   display: 'flex',
   flexDirection: 'column',
+  cursor: 'pointer',
   '&:hover': {
     boxShadow: '0 0 12px rgba(255, 87, 34, 0.1)',
     transform: 'translateY(-2px)',
@@ -68,16 +75,36 @@ const StyledAvatar = styled(Avatar)(({ theme }) => ({
 
 const StatusChip = styled(Chip)(({ status }) => ({
   backgroundColor: status === 'completed' ? 'rgba(76, 175, 80, 0.2)' :
-    status === 'in-progress' ? 'rgba(255, 87, 34, 0.2)' : 'rgba(233, 30, 99, 0.2)',
+    status === 'inprogress' ? 'rgba(255, 87, 34, 0.2)' : 'rgba(233, 30, 99, 0.2)',
   color: status === 'completed' ? '#4caf50' :
-    status === 'in-progress' ? '#ff5722' : '#e91e63',
+    status === 'inprogress' ? '#ff5722' : '#e91e63',
   fontWeight: 'bold',
   boxShadow: status === 'completed' ? '0 0 5px rgba(76, 175, 80, 0.2)' :
-    status === 'in-progress' ? '0 0 5px rgba(255, 87, 34, 0.2)' : '0 0 5px rgba(233, 30, 99, 0.2)',
+    status === 'inprogress' ? '0 0 5px rgba(255, 87, 34, 0.2)' : '0 0 5px rgba(233, 30, 99, 0.2)',
   '&:hover': {
     boxShadow: status === 'completed' ? '0 0 8px rgba(76, 175, 80, 0.3)' :
-      status === 'in-progress' ? '0 0 8px rgba(255, 87, 34, 0.3)' : '0 0 8px rgba(233, 30, 99, 0.3)',
+      status === 'inprogress' ? '0 0 8px rgba(255, 87, 34, 0.3)' : '0 0 8px rgba(233, 30, 99, 0.3)',
   },
+  pointerEvents: 'none',
+}));
+
+const PriorityChip = styled(Chip)(({ priority }) => ({
+  backgroundColor: priority === 'high' ? 'rgba(244, 67, 54, 0.2)' :
+    priority === 'medium' ? 'rgba(255, 152, 0, 0.2)' :
+    'rgba(76, 175, 80, 0.2)',
+  color: priority === 'high' ? '#f44336' :
+    priority === 'medium' ? '#ff9800' :
+    '#4caf50',
+  fontWeight: 'bold',
+  boxShadow: priority === 'high' ? '0 0 5px rgba(244, 67, 54, 0.2)' :
+    priority === 'medium' ? '0 0 5px rgba(255, 152, 0, 0.2)' :
+    '0 0 5px rgba(76, 175, 80, 0.2)',
+  '&:hover': {
+    boxShadow: priority === 'high' ? '0 0 8px rgba(244, 67, 54, 0.3)' :
+      priority === 'medium' ? '0 0 8px rgba(255, 152, 0, 0.3)' :
+      '0 0 8px rgba(76, 175, 80, 0.3)',
+  },
+  pointerEvents: 'none',
 }));
 
 // API service functions
@@ -85,22 +112,27 @@ const API_BASE_URL = 'http://localhost:3000'; // Update this with your actual ba
 
 const api = {
   getTasks: async (userId) => {
-    const response = await axios.get(`${API_BASE_URL}/tasks/${userId}`);
+    const response = await axios.get(`${API_BASE_URL}/tasks`);
     return response.data;
   },
   
   createTask: async (userId, taskData) => {
-    const response = await axios.post(`${API_BASE_URL}/tasks/create/${userId}`, taskData);
+    const response = await axios.post(`${API_BASE_URL}/tasks/create`, taskData);
     return response.data;
   },
   
   updateTask: async (taskId, taskData) => {
-    const response = await axios.put(`${API_BASE_URL}/tasks/${taskId}/update`, taskData);
+    const response = await axios.put(`${API_BASE_URL}/tasks/${taskId}/update/`, taskData);
     return response.data;
   },
   
   deleteTask: async (taskId) => {
-    const response = await axios.delete(`${API_BASE_URL}/tasks/${taskId}`);
+    const token = localStorage.getItem('token');
+    const response = await axios.delete(`${API_BASE_URL}/tasks/${taskId}/delete`, {
+      headers: {
+        'auth_token': `Bearer ${token}`
+      }
+    });
     return response.data;
   },
   
@@ -127,12 +159,19 @@ const Dashboard = () => {
     description: '',
     dueDate: '',
     status: 'pending',
+    priority: 'medium',
   });
   const [profile, setProfile] = useState({
     name: '',
     email: '',
     avatar: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
   });
+  const [activeTab, setActiveTab] = useState(0);
+  const [sortBy, setSortBy] = useState('newest');
+  const [selectedMonth, setSelectedMonth] = useState('all');
   const navigate = useNavigate();
 
   // Get userId from localStorage or your auth context
@@ -142,18 +181,34 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [tasksData, profileData] = await Promise.all([
-          api.getTasks(userId),
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const [tasksResponse, profileResponse] = await Promise.all([
+          axios.get(`http://localhost:3000/tasks`, {
+            headers: {
+              'auth_token': `Bearer ${token}`
+            }
+          }),
           api.getUserProfile(userId)
         ]);
-        setTasks(tasksData);
+
+        setTasks(tasksResponse.data);
         setProfile({
-          ...profileData,
-          avatar: profileData.name.split(' ').map(n => n[0]).join('').toUpperCase()
+          ...profileResponse,
+          avatar: profileResponse.name.split(' ').map(n => n[0]).join('').toUpperCase()
         });
+        setError(null);
       } catch (err) {
-        setError(err.message);
         console.error('Error fetching data:', err);
+        setError(err.response?.data?.message || 'Failed to fetch data. Please try again.');
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('userId');
+          navigate('/login');
+        }
       } finally {
         setLoading(false);
       }
@@ -180,40 +235,109 @@ const Dashboard = () => {
       description: '',
       dueDate: '',
       status: 'pending',
+      priority: 'medium',
     });
     setOpenTaskDialog(true);
   };
 
   const handleSaveTask = async () => {
     try {
-      if (currentTask.id) {
-        const updatedTask = await api.updateTask(currentTask.id, currentTask);
-        setTasks(tasks.map(task => 
-          task.id === currentTask.id ? updatedTask : task
-        ));
-      } else {
-        const newTask = await api.createTask(userId, currentTask);
-        setTasks([...tasks, newTask]);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
       }
-      setOpenTaskDialog(false);
+
+      // Validate required fields
+      if (!currentTask.title || !currentTask.description || !currentTask.dueDate) {
+        setError('Title, description, and due date are required');
+        return;
+      }
+
+      // Format due_date as datetime
+      const dueDate = new Date(currentTask.dueDate);
+      dueDate.setHours(0, 0, 0, 0); // Set time to start of day
+
+      const taskData = {
+        title: currentTask.title,
+        description: currentTask.description,
+        status: currentTask.status || 'pending',
+        priority: currentTask.priority || 'medium',
+        due_date: dueDate.toISOString().slice(0, 19).replace('T', ' ')
+      };
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'auth_token': `Bearer ${token}`
+      };
+
+      if (currentTask.taskId) {
+        // Update existing task
+        const response = await axios.put(
+          `http://localhost:3000/tasks/${currentTask.taskId}/update`,
+          taskData,
+          { headers }
+        );
+        
+        if (response.data) {
+          setTasks(tasks.map(task => 
+            task.taskId === currentTask.taskId ? { ...task, ...taskData } : task
+          ));
+          setOpenTaskDialog(false);
+          setError(null);
+        }
+      } else {
+        // Create new task
+        const response = await axios.post(
+          `http://localhost:3000/tasks/create`,
+          taskData,
+          { headers }
+        );
+        
+        if (response.data) {
+          setTasks([...tasks, { ...taskData, id: response.data }]);
+          setOpenTaskDialog(false);
+          setError(null);
+        }
+      }
     } catch (err) {
-      setError(err.message);
       console.error('Error saving task:', err);
+      setError(err.response?.data?.message || 'Failed to save task. Please try again.');
     }
   };
 
   const handleDeleteTask = async (taskId) => {
     try {
-      await api.deleteTask(taskId);
-      setTasks(tasks.filter(task => task.id !== taskId));
+      if (!taskId) {
+        throw new Error('Invalid task ID');
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      await axios.delete(`${API_BASE_URL}/tasks/${taskId}/delete`, {
+        headers: {
+          'auth_token': `Bearer ${token}`
+        }
+      });
+      
+      setTasks(tasks.filter(task => task.taskId !== taskId));
+      setError(null);
     } catch (err) {
-      setError(err.message);
       console.error('Error deleting task:', err);
+      setError(err.response?.data?.message || 'Failed to delete task. Please try again.');
     }
   };
 
   const handleEditTask = (task) => {
-    setCurrentTask(task);
+    // Format the due_date for the date input field (YYYY-MM-DD)
+    const dueDate = task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '';
+    
+    setCurrentTask({
+      ...task,
+      dueDate: dueDate
+    });
     setOpenTaskDialog(true);
   };
 
@@ -224,12 +348,36 @@ const Dashboard = () => {
         throw new Error('No authentication token found');
       }
 
+      // Validate passwords if any password field is filled
+      if (profile.newPassword || profile.currentPassword || profile.confirmPassword) {
+        if (!profile.currentPassword) {
+          setError('Current password is required to update password');
+          return;
+        }
+        if (!profile.newPassword) {
+          setError('New password is required');
+          return;
+        }
+        if (profile.newPassword !== profile.confirmPassword) {
+          setError('New passwords do not match');
+          return;
+        }
+      }
+
+      const updateData = {
+        name: profile.name,
+        email: profile.email,
+      };
+
+      // Only include password fields if they are being updated
+      if (profile.newPassword) {
+        updateData.currentPassword = profile.currentPassword;
+        updateData.newPassword = profile.newPassword;
+      }
+
       const response = await axios.put(
         `http://localhost:3000/users/${userId}/update`,
-        {
-          name: profile.name,
-          email: profile.email
-        },
+        updateData,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -241,10 +389,12 @@ const Dashboard = () => {
       if (response.data) {
         setProfile({
           ...response.data,
-          avatar: response.data.name.split(' ').map(n => n[0]).join('').toUpperCase()
+          avatar: response.data.name.split(' ').map(n => n[0]).join('').toUpperCase(),
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
         });
         setOpenProfileDialog(false);
-        // Show success message
         setError(null);
       }
     } catch (err) {
@@ -252,6 +402,81 @@ const Dashboard = () => {
       setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
     }
   };
+
+  const handleTaskStatusChange = async (taskId, currentStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+      const taskData = {
+        status: newStatus
+      };
+
+      await axios.put(
+        `${API_BASE_URL}/tasks/${taskId}/update`,
+        taskData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'auth_token': `Bearer ${token}`
+          }
+        }
+      );
+
+      setTasks(tasks.map(task => 
+        task.taskId === taskId ? { ...task, status: newStatus } : task
+      ));
+      setError(null);
+    } catch (err) {
+      console.error('Error updating task status:', err);
+      setError(err.response?.data?.message || 'Failed to update task status. Please try again.');
+    }
+  };
+
+  const getMonthName = (date) => {
+    return new Date(date).toLocaleString('default', { month: 'long' });
+  };
+
+  const sortTasks = (tasks) => {
+    let sortedTasks = [...tasks];
+
+    // First filter by month if selected
+    if (selectedMonth !== 'all') {
+      sortedTasks = sortedTasks.filter(task => 
+        getMonthName(task.due_date) === selectedMonth
+      );
+    }
+
+    // Then sort by date
+    return sortedTasks.sort((a, b) => {
+      const dateA = new Date(a.due_date);
+      const dateB = new Date(b.due_date);
+      
+      if (sortBy === 'newest') {
+        return dateB - dateA;
+      } else if (sortBy === 'oldest') {
+        return dateA - dateB;
+      }
+      return 0;
+    });
+  };
+
+  const getUniqueMonths = (tasks) => {
+    const months = tasks.map(task => getMonthName(task.due_date));
+    return ['all', ...new Set(months)];
+  };
+
+  const filteredTasks = tasks.filter(task => {
+    if (activeTab === 0) return task.status === 'pending';
+    if (activeTab === 1) return task.status === 'inprogress';
+    if (activeTab === 2) return task.status === 'completed';
+    return true;
+  });
+
+  const filteredAndSortedTasks = sortTasks(filteredTasks);
 
   const open = Boolean(profileAnchorEl);
 
@@ -279,21 +504,95 @@ const Dashboard = () => {
               <StyledPaper>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                   <Typography variant="h5" sx={{ color: '#ff5722', flex: '1 1 auto' }}>My Tasks</Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={handleAddTask}
-                    sx={{
-                      background: 'linear-gradient(45deg, #ff5722 30%, #ff9800 90%)',
-                      color: '#fff',
-                      flex: '0 0 auto',
-                    }}
-                  >
-                    Add Task
-                  </Button>
+                  <Box display="flex" gap={2} alignItems="center">
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <InputLabel sx={{ color: 'rgba(255, 87, 34, 0.7)' }}>Sort By</InputLabel>
+                      <Select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        label="Sort By"
+                        sx={{
+                          color: '#ff5722',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 87, 34, 0.3)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 87, 34, 0.5)',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#ff5722',
+                          },
+                        }}
+                      >
+                        <MenuItem value="newest">Newest First</MenuItem>
+                        <MenuItem value="oldest">Oldest First</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <InputLabel sx={{ color: 'rgba(255, 87, 34, 0.7)' }}>Filter Month</InputLabel>
+                      <Select
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        label="Filter Month"
+                        sx={{
+                          color: '#ff5722',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 87, 34, 0.3)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 87, 34, 0.5)',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#ff5722',
+                          },
+                        }}
+                      >
+                        {getUniqueMonths(tasks).map((month) => (
+                          <MenuItem key={month} value={month}>
+                            {month.charAt(0).toUpperCase() + month.slice(1)}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={handleAddTask}
+                      sx={{
+                        background: 'linear-gradient(45deg, #ff5722 30%, #ff9800 90%)',
+                        color: '#fff',
+                      }}
+                    >
+                      Add Task
+                    </Button>
+                  </Box>
                 </Box>
+
+                <Tabs
+                  value={activeTab}
+                  onChange={(e, newValue) => setActiveTab(newValue)}
+                  sx={{
+                    mb: 2,
+                    '& .MuiTab-root': {
+                      color: 'rgba(255, 87, 34, 0.7)',
+                      '&.Mui-selected': {
+                        color: '#ff5722',
+                      },
+                    },
+                    '& .MuiTabs-indicator': {
+                      backgroundColor: '#ff5722',
+                    },
+                  }}
+                >
+                  <Tab label="Pending Tasks" />
+                  <Tab label="In Progress" />
+                  <Tab label="Completed Tasks" />
+                </Tabs>
+
                 <List>
-                  {tasks.length === 0 ? (
+                  {filteredAndSortedTasks.length === 0 ? (
                     <Box 
                       display="flex" 
                       justifyContent="center" 
@@ -306,40 +605,88 @@ const Dashboard = () => {
                       }}
                     >
                       <Typography variant="body1" color="textSecondary">
-                        No tasks yet. Click "Add Task" to create one!
+                        {activeTab === 0 ? 'No pending tasks. Click "Add Task" to create one!' :
+                         activeTab === 1 ? 'No tasks in progress.' :
+                         'No completed tasks yet.'}
                       </Typography>
                     </Box>
                   ) : (
-                    tasks.map((task) => (
+                    filteredAndSortedTasks.map((task) => (
                       <motion.div
-                        key={task.id}
+                        key={task.taskId}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <TaskItem>
+                        <TaskItem onClick={() => handleEditTask(task)}>
                           <Box display="flex" justifyContent="space-between" alignItems="flex-start" width="100%">
-                            <Box flex={1} mr={2}>
-                              <Typography variant="h6" sx={{ color: '#ff5722', mb: 1 }}>
-                                {task.title}
-                              </Typography>
-                              <Typography variant="body2" color="textSecondary" paragraph>
-                                {task.description}
-                              </Typography>
-                              <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                                <Typography variant="caption" color="textSecondary">
-                                  Due: {new Date(task.dueDate).toLocaleDateString()}
+                            <Box display="flex" alignItems="flex-start" flex={1} mr={2}>
+                              <Checkbox
+                                checked={task.status === 'completed'}
+                                onChange={(e) => {
+                                  e.stopPropagation(); // Prevent task item click when clicking checkbox
+                                  handleTaskStatusChange(task.taskId, task.status);
+                                }}
+                                sx={{
+                                  color: 'rgba(255, 87, 34, 0.7)',
+                                  '&.Mui-checked': {
+                                    color: '#ff5722',
+                                  },
+                                }}
+                              />
+                              <Box>
+                                <Typography 
+                                  variant="h6" 
+                                  sx={{ 
+                                    color: '#ff5722', 
+                                    mb: 1,
+                                    textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                                    opacity: task.status === 'completed' ? 0.7 : 1
+                                  }}
+                                >
+                                  {task.title}
                                 </Typography>
-                                <StatusChip
-                                  label={task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-                                  status={task.status}
-                                  size="small"
-                                />
+                                <Typography 
+                                  variant="body2" 
+                                  color="textSecondary" 
+                                  paragraph
+                                  sx={{
+                                    textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                                    opacity: task.status === 'completed' ? 0.7 : 1
+                                  }}
+                                >
+                                  {task.description}
+                                </Typography>
+                                <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                                  <Typography 
+                                    variant="caption" 
+                                    color="textSecondary"
+                                    sx={{
+                                      textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                                      opacity: task.status === 'completed' ? 0.7 : 1
+                                    }}
+                                  >
+                                    Due: {new Date(task.due_date).toLocaleDateString()}
+                                  </Typography>
+                                  <PriorityChip
+                                    label={task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Medium'}
+                                    priority={task.priority || 'medium'}
+                                    size="small"
+                                  />
+                                  <StatusChip
+                                    label={task.status ? task.status.charAt(0).toUpperCase() + task.status.slice(1) : 'Pending'}
+                                    status={task.status || 'pending'}
+                                    size="small"
+                                  />
+                                </Box>
                               </Box>
                             </Box>
                             <Box display="flex" gap={1}>
                               <IconButton
-                                onClick={() => handleEditTask(task)}
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent task item click when clicking edit button
+                                  handleEditTask(task);
+                                }}
                                 sx={{
                                   color: '#ff5722',
                                   '&:hover': {
@@ -351,7 +698,10 @@ const Dashboard = () => {
                                 <EditIcon />
                               </IconButton>
                               <IconButton
-                                onClick={() => handleDeleteTask(task.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent task item click when clicking delete button
+                                  handleDeleteTask(task.taskId);
+                                }}
                                 sx={{
                                   color: '#e91e63',
                                   '&:hover': {
@@ -458,7 +808,7 @@ const Dashboard = () => {
         }}
       >
         <DialogTitle sx={{ color: '#ff5722' }}>
-          {currentTask.id ? 'Edit Task' : 'Add New Task'}
+          {currentTask.taskIdd ? 'Edit Task' : 'Add New Task'}
         </DialogTitle>
         <DialogContent>
           <TextField
@@ -532,8 +882,29 @@ const Dashboard = () => {
             }}
           >
             <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="in-progress">In Progress</MenuItem>
+            <MenuItem value="inprogress">In Progress</MenuItem>
             <MenuItem value="completed">Completed</MenuItem>
+          </TextField>
+          <TextField
+            margin="dense"
+            label="Priority"
+            select
+            fullWidth
+            value={currentTask.priority}
+            onChange={(e) => setCurrentTask({ ...currentTask, priority: e.target.value })}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: 'rgba(255, 87, 34, 0.3)' },
+                '&:hover fieldset': { borderColor: 'rgba(255, 87, 34, 0.5)' },
+                '&.Mui-focused fieldset': { borderColor: '#ff5722' },
+              },
+              '& .MuiInputLabel-root': { color: 'rgba(255, 87, 34, 0.7)' },
+              '& .MuiInputBase-input': { color: '#fff' },
+            }}
+          >
+            <MenuItem value="high">High</MenuItem>
+            <MenuItem value="medium">Medium</MenuItem>
+            <MenuItem value="low">Low</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions>

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { tasks } from "src/Users/entitys/task.entity";
+import { tasks } from "src/Users/entities/task.entity";
 import { Repository } from "typeorm";
 import { createTaskDto } from "../dtos/taskdto.dto";
 
@@ -25,7 +25,7 @@ export class TaskServices {
         const result = await this.taskRepo.save(task);
         return result.taskId
     }
-    
+
     async updateTask(taskId: number, taskData: createTaskDto) {
         await this.taskRepo
             .createQueryBuilder()
@@ -34,6 +34,22 @@ export class TaskServices {
             .where('taskId = :taskId', { taskId: taskId })
             .execute();
         return true
+    }
+
+    async deleteTask(taskId: number){
+        try {
+            // await this.userRepo.delete({taskId: taskId})
+            await this.taskRepo
+                .createQueryBuilder()
+                .delete()
+                .from('tasks')
+                .where('taskId = :taskId', { taskId })
+                .execute();
+            return {message: "Task deleted successfully"}
+        } catch (err) {
+            console.log('Error while deleting a task ', err)
+            return {message: "Task deleted successfully"}
+        }
     }
 
 }

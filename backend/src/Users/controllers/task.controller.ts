@@ -1,31 +1,46 @@
-import { Controller, Get, Post, Param, Body, Req, Res,Put, Patch } from "@nestjs/common"
-import { createTaskDto} from "../dtos/taskdto.dto"
+import { Controller, Get, Post, Delete, Param, Body, Req, Put, UseGuards } from "@nestjs/common"
+import { createTaskDto } from "../dtos/taskdto.dto"
 import { TaskServices } from "../services/task.service";
+import { AuthGuard } from "../guards/auth.guard"
 
 @Controller('tasks')
 
 /*  -------------------------------------------------------------------------------------------------------------------------
                                                     T A S K  C O N T R O L L E R
-    ---------------------------------------------------------------------------------------------------------------------------*/
-
+---------------------------------------------------------------------------------------------------------------------------*/
+@UseGuards(AuthGuard)
 export class TaskController {
     constructor(private taskService: TaskServices) { }
-    @Get(':id')
-    getTasksById(@Param('id') id: number) {
-        return this.taskService.findAllTasks(id);
+
+    @Get()
+    async getTasks(@Req() req) {
+        const userId = req.headers['user'].userId;
+        const res = await this.taskService.findAllTasks(userId);
+        console.log(res)
+        return res
     }
 
-    @Get(':id/:postId')
-    getTaskById(@Param('id') id: number, @Param('postId') postId : number){
-        return this.taskService.getTaskById(id, postId)
-    }
-    @Post('create/:id')
-    addTask(@Param('id') id: number, @Body() taskData: createTaskDto) {
-        return this.taskService.addTask(id, taskData)
+    @Get(':taskId')
+    async getTaskById(@Req() req, @Param('taskId') taskId: number) {
+        const userId = req.headers['user'].userId;
+        return this.taskService.getTaskById(userId, taskId);
     }
 
-    @Patch(':id/update')
-    updateTask(@Param('id') id:number, @Body() taskData: createTaskDto){
-        return this.taskService.updateTask(id, taskData);
+    @Post('create')
+    async addTask(@Req() req, @Body() taskData: createTaskDto) {
+        const userId = req.headers['user'].userId;
+        return this.taskService.addTask(userId, taskData);
+    }
+
+    @Put(':taskId/update')
+    async updateTask(@Req() req, @Param('taskId') taskId: number, @Body() taskData: createTaskDto) {
+        const userId = req.headers['user'].userId;
+        return this.taskService.updateTask(taskId, taskData);
+    }
+
+    @Delete(':taskId/delete')
+    async deleteTask(@Req() req, @Param('taskId') taskId: number) {
+        const userId = req.headers['user'].userId;
+        return await this.taskService.deleteTask(taskId);
     }
 }
