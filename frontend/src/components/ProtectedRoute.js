@@ -10,16 +10,16 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
-      console.log('Protected Route - Token:', token);
+      // console.log('Protected Route - Token:', token);
 
       if (!token) {
-        console.log('Protected Route - No token found');
+        // console.log('Protected Route - No token found');
         setIsAuthenticated(false);
         return;
       }
 
       try {
-        console.log('Protected Route - Checking auth with token');
+        // console.log('Protected Route - Checking auth with token');
         const response = await axios.get('http://localhost:3000/auth/login', {
           headers: {
             auth_token: `Bearer ${token}`,
@@ -28,7 +28,7 @@ const ProtectedRoute = ({ children }) => {
         });
 
         // Check if we have a valid response
-        if (response.data && response.data !== "Hello world") {
+        if (response.data) {
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
@@ -59,7 +59,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    console.log('Protected Route - Redirecting to login');
+    // console.log('Protected Route - Redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

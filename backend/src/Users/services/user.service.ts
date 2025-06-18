@@ -6,6 +6,7 @@ import { Repository } from "typeorm";
 
 @Injectable()
 
+/* ***************************************-| M y S Q L -- S E R V I C E S |-******************************************** */
 export class UserServices {
 
     constructor(@InjectRepository(users) private userRepo: Repository<users>) { }
@@ -50,21 +51,27 @@ export class UserServices {
             console.log('Error while deleting a user ', err)
         }
     }
+}
+/* ***************************************-| M O N G O O S E -- S E R V I C E S |-*************************************** */
 
+import { InjectModel } from "@nestjs/mongoose"
+import { Model } from "mongoose";
+@Injectable()
+export class UserServices2{
+    constructor(@InjectModel('User') private userModel: Model<any>) {}
 
-    private fakeUser = [{ name: 'Sachin', designation: 'PHP Trainee' },
-    { name: 'Maxwell', designation: 'Cricketer' }]
-
-    getUsers() {
-        return this.fakeUser
+    async findAllUser(){
+        return this.userModel.find()
     }
 
-    CreateUser(userDetails: UserDataDto) {
-        this.fakeUser.push(userDetails)
-        return 'User Created Success...'
+    async findOne(id: number){
+        return await this.userModel.findOne({ where: { userId: id } })
     }
 
-    GetUserById(id) {
-        return [{ id, name: 'Maxwell', designation: 'Cricketer' }]
+    async addUser(userData: CreateUserDto){
+        const newUser = new this.userModel(userData); 
+        return await newUser.save()
     }
+
+
 }
