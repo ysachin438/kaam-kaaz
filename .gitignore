@@ -1,0 +1,7 @@
+backend/node_modules
+backend/dist
+
+backend2/node_modules
+backend2/dist
+
+frontend/node_modules
