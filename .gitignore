@@ -1,12 +1,9 @@
 backend/node_modules
 backend/dist
-backend/node_modules
-backend/build
 
 backend2/node_modules
-backend2/dist
-backend2/node_modules
 backend2/build
+backend2/dist
 
 frontend/node_modules
 frontend/.pnp
@@ -17,3 +14,4 @@ frontend/coverage
 
 # production
 frontend/build
+
