@@ -5,3 +5,11 @@ backend2/node_modules
 backend2/dist
 
 frontend/node_modules
+frontend/.pnp
+.pnp.js
+
+# testing
+frontend/coverage
+
+# production
+frontend/build
