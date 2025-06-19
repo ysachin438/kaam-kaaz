@@ -6,6 +6,7 @@ import { UserServices } from "src/Users/services/user.service";
 /*  -------------------------------------------------------------------------------------------------------------------------
                                                     U S E R  C O N T R O L L E R
     ---------------------------------------------------------------------------------------------------------------------------*/
+@UseGuards(AuthGuard)
 @Controller('users')
 
 export class UserController {
@@ -20,7 +21,7 @@ export class UserController {
     GetUserByID(@Param('id') id: number) {
         return this.userService.findOne(id)
     }
-
+    @UsePipes(new ValidationPipe())
     @Put(':id/update')
     async UpdateUser(@Param('id') id: number, @Body() userData: UpdateUserDto){
         const res = await this.userService.updateUser(id, userData)
