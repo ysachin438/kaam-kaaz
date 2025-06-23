@@ -27,15 +27,18 @@ import {
   Delete as DeleteIcon,
   AccountCircle as AccountCircleIcon,
   Group as GroupIcon,
+  Brightness4 as Brightness4Icon,
+  Brightness7 as Brightness7Icon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { apiService } from '../api';
 import TaskHeader from '../components/dashboard/TaskHeader';
 import TaskTabs from '../components/dashboard/TaskTabs';
 import TaskList from '../components/dashboard/TaskList';
 import TaskDialog from '../components/dashboard/TaskDialog';
 import ProfileDialog from '../components/dashboard/ProfileDialog';
 import SharedTasks from '../components/dashboard/SharedTasks';
+import TaskDetailDialog from '../components/dashboard/TaskDetailDialog';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -122,55 +125,6 @@ const StyledIconButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
-// API service functions
-const API_BASE_URL = 'http://localhost:3000'; // Update this with your actual backend URL
-
-const api = {
-  getTasks: async (userId, status = null) => {
-    const token = localStorage.getItem('token');
-    const url = status 
-      ? `${API_BASE_URL}/tasks?status=${status}`
-      : `${API_BASE_URL}/tasks`;
-    
-    const response = await axios.get(url, {
-      headers: {
-        'auth_token': `Bearer ${token}`
-      }
-    });
-    return response.data;
-  },
-  
-  createTask: async (userId, taskData) => {
-    const response = await axios.post(`${API_BASE_URL}/tasks/create`, taskData);
-    return response.data;
-  },
-  
-  updateTask: async (taskId, taskData) => {
-    const response = await axios.put(`${API_BASE_URL}/tasks/${taskId}/update/`, taskData);
-    return response.data;
-  },
-  
-  deleteTask: async (taskId) => {
-    const token = localStorage.getItem('token');
-    const response = await axios.delete(`${API_BASE_URL}/tasks/${taskId}/delete`, {
-      headers: {
-        'auth_token': `Bearer ${token}`
-      }
-    });
-    return response.data;
-  },
-  
-  getUserProfile: async (userId) => {
-    const response = await axios.get(`${API_BASE_URL}/users/${userId}`);
-    return response.data;
-  },
-  
-  updateUserProfile: async (userId, profileData) => {
-    const response = await axios.put(`${API_BASE_URL}/users/${userId}`, profileData);
-    return response.data;
-  }
-};
-
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -194,6 +148,8 @@ const Dashboard = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [showCollaboration, setShowCollaboration] = useState(false);
+  const [openTaskDetailDialog, setOpenTaskDetailDialog] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
   const navigate = useNavigate();
 
   // Get userId from localStorage or your auth context
@@ -209,8 +165,8 @@ const Dashboard = () => {
         }
 
         const [tasksResponse, profileResponse] = await Promise.all([
-          api.getTasks(userId, activeTab === 'all' ? null : activeTab),
-          api.getUserProfile(userId)
+          apiService.getTasks(activeTab === 'all' ? null : activeTab),
+          apiService.getUserProfile(userId)
         ]);
 
         setTasks(tasksResponse);
@@ -222,7 +178,7 @@ const Dashboard = () => {
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.response?.data?.message || 'Failed to fetch data. Please try again.');
-        if (err.response?.status === 401) {
+        if (err.response?.status === 401 || err.response?.status === 403) {
           localStorage.removeItem('token');
           localStorage.removeItem('userId');
           navigate('/login');
@@ -258,7 +214,7 @@ const Dashboard = () => {
     setOpenTaskDialog(true);
   };
 
-  const handleSaveTask = async () => {
+  const handleSaveTask = async (taskData) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -266,57 +222,34 @@ const Dashboard = () => {
       }
 
       // Validate required fields
-      if (!currentTask.title || !currentTask.description || !currentTask.dueDate) {
+      if (!taskData.title || !taskData.description || !taskData.due_date) {
         setError('Title, description, and due date are required');
         return;
       }
 
       // Format due_date as datetime
-      const dueDate = new Date(currentTask.dueDate);
-      dueDate.setHours(0, 0, 0, 0); // Set time to start of day
+      const dueDate = new Date(taskData.due_date);
+      dueDate.setHours(0, 0, 0, 0);
 
-      const taskData = {
-        title: currentTask.title,
-        description: currentTask.description,
-        status: currentTask.status || 'pending',
-        priority: currentTask.priority || 'medium',
+      const payload = {
+        ...taskData,
         due_date: dueDate.toISOString().slice(0, 19).replace('T', ' ')
       };
 
-      const headers = {
-        'Content-Type': 'application/json',
-        'auth_token': `Bearer ${token}`
-      };
-
-      if (currentTask.taskId) {
+      if (taskData.taskId) {
         // Update existing task
-        const response = await axios.put(
-          `http://localhost:3000/tasks/${currentTask.taskId}/update`,
-          taskData,
-          { headers }
-        );
-        
-        if (response.data) {
-          setTasks(tasks.map(task => 
-            task.taskId === currentTask.taskId ? { ...task, ...taskData } : task
-          ));
-          setOpenTaskDialog(false);
-          setError(null);
-        }
+        await apiService.updateTask(taskData.taskId, payload);
+        setTasks(tasks.map(task =>
+          task.taskId === taskData.taskId ? { ...task, ...payload } : task
+        ));
       } else {
         // Create new task
-        const response = await axios.post(
-          `http://localhost:3000/tasks/create`,
-          taskData,
-          { headers }
-        );
-        
-        if (response.data) {
-          setTasks([...tasks, { ...taskData, id: response.data }]);
-          setOpenTaskDialog(false);
-          setError(null);
-        }
+        const response = await apiService.createTask(payload);
+        setTasks([...tasks, { ...payload, id: response.id }]);
       }
+
+      setOpenTaskDialog(false);
+      setError(null);
     } catch (err) {
       console.error('Error saving task:', err);
       setError(err.response?.data?.message || 'Failed to save task. Please try again.');
@@ -329,17 +262,7 @@ const Dashboard = () => {
         throw new Error('Invalid task ID');
       }
 
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      await axios.delete(`${API_BASE_URL}/tasks/${taskId}/delete`, {
-        headers: {
-          'auth_token': `Bearer ${token}`
-        }
-      });
-      
+      await apiService.deleteTask(taskId);
       setTasks(tasks.filter(task => task.taskId !== taskId));
       setError(null);
     } catch (err) {
@@ -361,35 +284,18 @@ const Dashboard = () => {
 
   const handleUpdateProfile = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       const updateData = {
         name: profile.name,
         email: profile.email,
       };
 
-      const response = await axios.put(
-        `http://localhost:3000/users/${userId}/update`,
-        updateData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'auth_token': `Bearer ${token}`
-          }
-        }
-      );
-
-      if (response.data) {
-        setProfile({
-          ...response.data,
-          avatar: response.data.name.split(' ').map(n => n[0]).join('').toUpperCase(),
-        });
-        setOpenProfileDialog(false);
-        setError(null);
-      }
+      const response = await apiService.updateUserProfile(userId, updateData);
+      setProfile({
+        ...response,
+        avatar: response.name.split(' ').map(n => n[0]).join('').toUpperCase(),
+      });
+      setOpenProfileDialog(false);
+      setError(null);
     } catch (err) {
       console.error('Error updating profile:', err);
       setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
@@ -408,16 +314,7 @@ const Dashboard = () => {
         status: newStatus
       };
 
-      await axios.put(
-        `${API_BASE_URL}/tasks/${taskId}/update`,
-        taskData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'auth_token': `Bearer ${token}`
-          }
-        }
-      );
+      await apiService.updateTask(taskId, taskData);
 
       setTasks(tasks.map(task => 
         task.taskId === taskId ? { ...task, status: newStatus } : task
@@ -466,22 +363,69 @@ const Dashboard = () => {
 
   const open = Boolean(profileAnchorEl);
 
+  // Handler to open task details dialog
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+    setOpenTaskDetailDialog(true);
+  };
+
+  // Handler to close task details dialog
+  const handleCloseTaskDetailDialog = () => {
+    setOpenTaskDetailDialog(false);
+    setSelectedTask(null);
+  };
+
+  // Handler for edit from dialog
+  const handleEditTaskFromDialog = (task) => {
+    setOpenTaskDetailDialog(false);
+    setCurrentTask({
+      ...task,
+      dueDate: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
+    });
+    setOpenTaskDialog(true);
+  };
+
+  // Handler for delete from dialog
+  const handleDeleteTaskFromDialog = async (task) => {
+    await handleDeleteTask(task.id || task.taskId);
+    setOpenTaskDetailDialog(false);
+  };
+
+  // Toggle subtask completion in the selected task (for dialog)
+  const handleToggleSubtask = (subtaskIdx) => {
+    if (!selectedTask) return;
+    setSelectedTask((prev) => {
+      const newSubtasks = prev.subtasks.map((st, idx) =>
+        idx === subtaskIdx ? { ...st, completed: !st.completed } : st
+      );
+      return { ...prev, subtasks: newSubtasks };
+    });
+    // Also update in main tasks list (for demo, not persisted)
+    setTasks((prevTasks) =>
+      prevTasks.map((t) =>
+        (t.id || t.taskId) === (selectedTask.id || selectedTask.taskId)
+          ? { ...t, subtasks: t.subtasks.map((st, idx) => idx === subtaskIdx ? { ...st, completed: !st.completed } : st) }
+          : t
+      )
+    );
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {error && (
-        <Box sx={{ mb: 2, p: 2, bgcolor: 'error.main', color: 'white', borderRadius: 1 }}>
-          {error}
-        </Box>
-      )}
-      
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <Typography>Loading...</Typography>
-        </Box>
-      ) : (
-        <Grid container spacing={3}>
-          {/* Tasks Section */}
-          <Grid item xs={12} md={9}>
+      <Box display="flex" alignItems="flex-start" gap={3}>
+        {/* Main Content */}
+        <Box flex={1}>
+          {error && (
+            <Box sx={{ mb: 2, p: 2, bgcolor: 'error.main', color: 'white', borderRadius: 1 }}>
+              {error}
+            </Box>
+          )}
+          
+          {loading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+              <Typography>Loading...</Typography>
+            </Box>
+          ) : (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -517,108 +461,118 @@ const Dashboard = () => {
                   onDeleteTask={handleDeleteTask}
                   onStatusChange={handleTaskStatusChange}
                   activeTab={activeTab}
+                  onTaskClick={handleTaskClick}
                 />
               </StyledPaper>
             </motion.div>
+          )}
 
-            {/* Shared Tasks Section */}
-            <AnimatePresence>
-              {showCollaboration && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  style={{ marginTop: '2rem' }}
-                >
-                  <SharedTasks />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </Grid>
-
-          {/* Profile Section */}
-          <Grid item xs={12} md={3}>
-            <Box display="flex" justifyContent="flex-end" mb={2}>
-              <StyledAvatar onClick={handleProfileClick}>
-                {profile.avatar}
-              </StyledAvatar>
-              <Tooltip title="Collaboration">
-                <StyledIconButton
-                  onClick={() => setShowCollaboration(!showCollaboration)}
-                  sx={{
-                    background: showCollaboration ? 'linear-gradient(45deg, #ff5722 40%, #ff9800 100%)' : 'linear-gradient(45deg, #ff5722 30%, #ff9800 90%)',
-                  }}
-                >
-                  <GroupIcon />
-                </StyledIconButton>
-              </Tooltip>
+          {/* Shared Tasks Section */}
+          <AnimatePresence>
+            {showCollaboration && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                style={{ marginTop: '2rem' }}
+              >
+                <SharedTasks />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Box>
+        {/* Profile Section */}
+        <Box minWidth={280} maxWidth={340}>
+          <Box display="flex" justifyContent="flex-end" mb={2} alignItems="center" gap={1}>
+            <StyledAvatar onClick={handleProfileClick}>
+              {profile.avatar}
+            </StyledAvatar>
+            <Tooltip title="Collaboration">
+              <StyledIconButton
+                onClick={() => setShowCollaboration(!showCollaboration)}
+                sx={{
+                  background: showCollaboration ? 'linear-gradient(45deg, #ff5722 40%, #ff9800 100%)' : 'linear-gradient(45deg, #ff5722 30%, #ff9800 90%)',
+                }}
+              >
+                <GroupIcon />
+              </StyledIconButton>
+            </Tooltip>
+          </Box>
+          <Popover
+            open={open}
+            anchorEl={profileAnchorEl}
+            onClose={handleProfileClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <Box sx={{ p: 2, minWidth: 200 }}>
+              <Typography variant="h6" sx={{ color: '#ff5722', mb: 1 }}>
+                {profile.name}
+              </Typography>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                {profile.email}
+              </Typography>
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => {
+                  handleProfileClose();
+                  setOpenProfileDialog(true);
+                }}
+                sx={{
+                  mt: 2,
+                  borderColor: 'rgba(255, 87, 34, 0.3)',
+                  color: '#ff5722',
+                  '&:hover': {
+                    borderColor: '#ff5722',
+                    boxShadow: '0 0 8px rgba(255, 87, 34, 0.2)',
+                  },
+                }}
+              >
+                Edit Profile
+              </Button>
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => {
+                  handleProfileClose();
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('userId');
+                  navigate('/login');
+                }}
+                sx={{
+                  mt: 1,
+                  borderColor: 'rgba(233, 30, 99, 0.3)',
+                  color: '#e91e63',
+                  '&:hover': {
+                    borderColor: '#e91e63',
+                    boxShadow: '0 0 8px rgba(233, 30, 99, 0.2)',
+                  },
+                }}
+              >
+                Logout
+              </Button>
             </Box>
-            <Popover
-              open={open}
-              anchorEl={profileAnchorEl}
-              onClose={handleProfileClose}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-            >
-              <Box sx={{ p: 2, minWidth: 200 }}>
-                <Typography variant="h6" sx={{ color: '#ff5722', mb: 1 }}>
-                  {profile.name}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  {profile.email}
-                </Typography>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={() => {
-                    handleProfileClose();
-                    setOpenProfileDialog(true);
-                  }}
-                  sx={{
-                    mt: 2,
-                    borderColor: 'rgba(255, 87, 34, 0.3)',
-                    color: '#ff5722',
-                    '&:hover': {
-                      borderColor: '#ff5722',
-                      boxShadow: '0 0 8px rgba(255, 87, 34, 0.2)',
-                    },
-                  }}
-                >
-                  Edit Profile
-                </Button>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={() => {
-                    handleProfileClose();
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('userId');
-                    navigate('/login');
-                  }}
-                  sx={{
-                    mt: 1,
-                    borderColor: 'rgba(233, 30, 99, 0.3)',
-                    color: '#e91e63',
-                    '&:hover': {
-                      borderColor: '#e91e63',
-                      boxShadow: '0 0 8px rgba(233, 30, 99, 0.2)',
-                    },
-                  }}
-                >
-                  Logout
-                </Button>
-              </Box>
-            </Popover>
-          </Grid>
-        </Grid>
-      )}
+          </Popover>
+        </Box>
+      </Box>
+
+      {/* Task Detail Dialog */}
+      <TaskDetailDialog
+        open={openTaskDetailDialog}
+        task={selectedTask}
+        onClose={handleCloseTaskDetailDialog}
+        onEdit={handleEditTaskFromDialog}
+        onDelete={handleDeleteTaskFromDialog}
+        onToggleSubtask={handleToggleSubtask}
+      />
 
       {/* Task Dialog */}
       <TaskDialog

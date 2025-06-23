@@ -1,5 +1,7 @@
 backend/node_modules
 backend/dist
+backend/.env
+
 
 backend2/node_modules
 backend2/build
@@ -15,3 +17,4 @@ frontend/coverage
 # production
 frontend/build
 
+node_modules/

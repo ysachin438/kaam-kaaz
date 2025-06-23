@@ -7,6 +7,7 @@ import { tasks } from "./Users/entities/task.entity"
 import { mysqlConfig } from "./config/database.config"
 import { MongooseModule } from '@nestjs/mongoose'
 import { taskSchema, userSchema } from './Users/schemas/user.schema';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 @Module({
   imports: [
     /********************************************-| MONGOOSE DATABASE CONNECTION |-******************************************************** */
@@ -14,7 +15,11 @@ import { taskSchema, userSchema } from './Users/schemas/user.schema';
     // MongooseModule.forFeature([{ name: 'users', schema: userSchema }, {name: 'tasks', schema : taskSchema}]),
 
     /********************************************-| MySQL DATABASE CONNECTION |-********************************************************* */
-    TypeOrmModule.forRoot(mysqlConfig),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: mysqlConfig,
+      inject: [ConfigService],
+    }),
     TypeOrmModule.forFeature([users, tasks]),
 
     UserModule,

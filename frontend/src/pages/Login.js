@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { apiService } from '../api';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -24,12 +24,10 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 }));
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
@@ -45,16 +43,11 @@ const Login = () => {
         return;
       }
 
-      const response = await axios.get('http://localhost:3000/auth/login', {
-        headers: {
-          auth_token: `Bearer ${token}`,
-        },
-        withCredentials: true
-      });
+      const response = await apiService.checkAuthStatus();
 
-      if (response.data.user) {
+      if (response.user) {
         setIsAuthenticated(true);
-        localStorage.setItem('userId', response.data.user.userId);
+        localStorage.setItem('userId', response.user.userId);
         navigate('/dashboard');
       }
     } catch (err) {
@@ -66,35 +59,51 @@ const Login = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
-
+    setError('');
+    
     try {
-      const response = await axios.post('http://localhost:3000/auth/login', formData, {
-        withCredentials: true
-      });
-      
-      if (response.data.auth_token) {
-        localStorage.setItem('token', response.data.auth_token);
-        localStorage.setItem('userId', response.data.user.userId);
-        setIsAuthenticated(true);
-        navigate('/dashboard');
+      setLoading(true);
+      const response = await apiService.login({ email, password });
+
+      if (response?.token && response?.userId) {
+        // Store auth data
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('userId', response.userId);
+        
+        // // Debug logging
+        // console.log('Login successful:', {
+        //   token: response.token,
+        //   userId: response.userId
+        // });
+        
+        // Navigate to dashboard
+        navigate('/dashboard', { replace: true });
+      } else {
+        throw new Error('Invalid response from server');
       }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(
+        error.response?.data?.message || 
+        error.message || 
+        'Login failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'email') {
+      setEmail(value);
+    } else if (name === 'password') {
+      setPassword(value);
+    }
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   if (loading) {
@@ -133,13 +142,13 @@ const Login = () => {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleLogin}>
           <TextField
             fullWidth
             label="Email"
             name="email"
             type="email"
-            value={formData.email}
+            value={email}
             onChange={handleInputChange}
             required
             margin="normal"
@@ -159,7 +168,7 @@ const Login = () => {
             label="Password"
             name="password"
             type="password"
-            value={formData.password}
+            value={password}
             onChange={handleInputChange}
             required
             margin="normal"

@@ -15,7 +15,8 @@ const TaskList = ({
   onStatusChange, 
   onEditTask, 
   onDeleteTask,
-  activeTab
+  activeTab,
+  onTaskClick
 }) => {
   if (!tasks || tasks.length === 0) {
     return (
@@ -50,7 +51,7 @@ const TaskList = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <TaskItem>
+          <TaskItem onClick={() => onTaskClick(task)} sx={{ cursor: 'pointer' }}>
             <Box display="flex" justifyContent="space-between" alignItems="flex-start" width="100%">
               <Box display="flex" alignItems="flex-start" flex={1} mr={2}>
                 <Checkbox
@@ -67,7 +68,7 @@ const TaskList = ({
                     },
                   }}
                 />
-                <Box flex={1} onClick={() => onEditTask(task)}>
+                <Box flex={1}>
                   <Typography 
                     variant="h6" 
                     sx={{ 
