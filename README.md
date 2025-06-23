@@ -105,4 +105,16 @@ npm start
 
 ---
 
+## Screenshots
+### Login
+![Dashboard](screenshots/login.png)
+
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Task Details Dialog
+![Task Details](screenshots/task-details.png)
+
+---
+
 
