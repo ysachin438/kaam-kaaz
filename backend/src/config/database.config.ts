@@ -12,5 +12,5 @@ export const mysqlConfig = (configService: ConfigService): TypeOrmModuleOptions 
     database: configService.get<string>('DATABASE_NAME'),
     // entities: [__dirname + '/**/*.entity{.ts,.js}'],
     entities: [users, tasks],
-    // synchronize: true,
+    synchronize: true,
 })

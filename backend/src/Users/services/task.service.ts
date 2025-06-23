@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { tasks } from "src/Users/entities/task.entity";
 import { Repository } from "typeorm";
 import { createTaskDto } from "../dtos/taskdto.dto";
+import sanitizeHtml from 'sanitize-html';
 
 @Injectable()
 
@@ -29,16 +30,28 @@ export class TaskServices {
     }
 
     async addTask(userId: number, taskData: createTaskDto) {
-        const task = this.taskRepo.create({ ...taskData, userId: userId })
+        // Sanitize description
+        const cleanDescription = sanitizeHtml(taskData.description || '', {
+            allowedTags: [],
+            allowedAttributes: {},
+        });
+        // Ensure subtasks is always an array (or undefined)
+        const task = this.taskRepo.create({ ...taskData, userId: userId, description: cleanDescription, subtasks: taskData.subtasks || [] })
         const result = await this.taskRepo.save(task);
         return result.taskId
     }
 
     async updateTask(taskId: number, taskData: createTaskDto) {
+        // Sanitize description
+        const cleanDescription = sanitizeHtml(taskData.description || '', {
+            allowedTags: [],
+            allowedAttributes: {},
+        });
+        // Ensure subtasks is always an array (or undefined)
         await this.taskRepo
             .createQueryBuilder()
             .update('tasks')
-            .set(taskData)
+            .set({ ...taskData, description: cleanDescription, subtasks: taskData.subtasks || [] })
             .where('taskId = :taskId', { taskId: taskId })
             .execute();
         return true

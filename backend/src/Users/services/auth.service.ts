@@ -1,57 +1,69 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { users } from "../entities/user.entity";
 import { CreateUserDto, UserDataDto } from "../dtos/userdto.dto";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt"
-@Injectable()
 
+@Injectable()
 export class AuthServices {
     constructor(@InjectRepository(users) private userRepo: Repository<users>, private jwtService: JwtService) { }
 
     async login(email: string, password: string) {
         try {
-            const isuser = await this.userRepo.findOne({ where: { email: email } })
+            const user = await this.userRepo.findOne({ where: { email: email } });
             
-            if (isuser) {
-                if (await bcrypt.compare(password, isuser.password)) {
-                    const { password, isActive, createdAt, ...user } = isuser
-                    const token = this.jwtService.sign({
-                        userId: user.userId,
-                        email: user.email
-                    })
-                    return { user, auth_token: token }
-                }
+            if (!user) {
+                throw new UnauthorizedException('Invalid email or password');
             }
-        } catch (err) {
-            console.log("Internal Error Occurred, ", err)
-        }
 
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                throw new UnauthorizedException('Invalid email or password');
+            }
+
+            const { password: _, isActive, createdAt, ...userData } = user;
+            const token = this.jwtService.sign({
+                userId: userData.userId,
+                email: userData.email
+            });
+
+            return {
+                token: token,
+                userId: userData.userId,
+                user: userData
+            };
+        } catch (err) {
+            if (err instanceof UnauthorizedException) {
+                throw err;
+            }
+            console.error("Login error:", err);
+            throw new InternalServerErrorException('An error occurred during login');
+        }
     }
 
     async signup(userData: CreateUserDto) {
-        try{
-
-            const hashedpass = await bcrypt.hash(userData.password, 10)
-            const newuser = this.userRepo.create({ ...userData, password: hashedpass })
-            const savedUser = await this.userRepo.save(newuser)
+        try {
+            const hashedpass = await bcrypt.hash(userData.password, 10);
+            const newuser = this.userRepo.create({ ...userData, password: hashedpass });
+            const savedUser = await this.userRepo.save(newuser);
             
             const token = this.jwtService.sign({
                 userId: savedUser.userId,
                 email: savedUser.email
-                
-            })
+            });
             
-            const { password, isActive, ...user } = savedUser
+            const { password: _, isActive, ...user } = savedUser;
             
             return {
-                user: user,
-                auth_token: token,
-            }
-        }catch(err){
-            console.log('Error Occurred auth.service.ts/signup ', err)
-            return {message:'Internal Server Error'}
+                token: token,
+                userId: user.userId,
+                user: user
+            };
+        } catch (err) {
+            console.error('Signup error:', err);
+            throw new InternalServerErrorException('An error occurred during signup');
         }
     }
 }

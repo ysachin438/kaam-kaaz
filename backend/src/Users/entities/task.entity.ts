@@ -27,4 +27,7 @@ export class tasks {
 
     @Column({ type: "datetime" })
     due_date: Timestamp
+
+    @Column('json', { nullable: true })
+    subtasks: { title: string; completed: boolean }[];
 }

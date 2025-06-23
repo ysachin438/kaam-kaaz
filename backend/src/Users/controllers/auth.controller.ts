@@ -13,22 +13,20 @@ export class AuthController {
 
     @Get('login')
     @UseGuards(AuthGuard)
-    getUser(@Body() userId: number){
-        return this.userService.findOne(userId)
+    async getUser(@Body() userId: number) {
+        return await this.userService.findOne(userId);
     }
 
     @Post('login')
     @UsePipes(new ValidationPipe())
-    login(@Body() userData: LoginUserDataDto) {
-        const res = this.authService.login(userData.email, userData.password)
-        return res
+    async login(@Body() userData: LoginUserDataDto) {
+        return await this.authService.login(userData.email, userData.password);
     }
     
     @Post('signup')
     @UsePipes(new ValidationPipe())
-    signup(@Body() userData: CreateUserDto){
-        const res = this.authService.signup(userData)
-        return res
+    async signup(@Body() userData: CreateUserDto) {
+        return await this.authService.signup(userData);
     }
 
 }
