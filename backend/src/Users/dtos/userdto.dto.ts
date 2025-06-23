@@ -2,6 +2,7 @@ import { isEmail, IsEmail, IsIn, IsNotEmpty, isNotEmpty, IsNumber, IsOptional, M
 export class UserDataDto {
     @IsNumber()
     userId: number
+    
     @IsNotEmpty()
     name: string
 

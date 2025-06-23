@@ -13,3 +13,4 @@ frontend/coverage
 
 # production
 frontend/build
+node_modules/
