@@ -82,7 +82,6 @@ const TaskDialog = ({
   };
 
   const handleSave = () => {
-    console.log('localTask:', localTask); // Debug log
     // Validation
     if (!localTask.title || !localTask.description || !localTask.dueDate) {
       setError('Title, description, and due date are required');

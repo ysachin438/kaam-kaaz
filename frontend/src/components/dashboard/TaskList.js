@@ -44,9 +44,9 @@ const TaskList = ({
 
   return (
     <List>
-      {tasks.map((task) => (
+      {tasks.map((task, idx) => (
         <motion.div
-          key={task.id || task.taskId}
+          key={task.taskId || task.id || idx}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
@@ -129,7 +129,7 @@ const TaskList = ({
                 <IconButton
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDeleteTask(task.id || task.taskId);
+                    onDeleteTask(task.taskId);
                   }}
                   size="small"
                   sx={{ color: 'rgba(233, 30, 99, 0.7)' }}

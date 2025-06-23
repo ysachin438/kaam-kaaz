@@ -70,7 +70,16 @@ const TaskDetailDialog = ({ open, task, onClose, onEdit, onDelete, onToggleSubta
             <Typography variant="subtitle1" gutterBottom>
               Progress
             </Typography>
-            <LinearProgress variant="determinate" value={progress} sx={{ mb: 1, height: 8, borderRadius: 4 }} />
+            <LinearProgress 
+              variant="determinate" 
+              value={progress} 
+              sx={{ mb: 1, height: 8, borderRadius: 4, 
+                '& .MuiLinearProgress-bar': {
+                  backgroundColor: '#4caf50', // green
+                },
+                backgroundColor: 'rgba(76, 175, 80, 0.15)', // light green background
+              }} 
+            />
             <Typography variant="caption" color="textSecondary" sx={{ mb: 1, display: 'block' }}>
               {completedCount} of {subtasks.length} completed
             </Typography>
