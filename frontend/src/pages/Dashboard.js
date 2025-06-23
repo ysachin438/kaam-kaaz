@@ -233,7 +233,8 @@ const Dashboard = () => {
 
       const payload = {
         ...taskData,
-        due_date: dueDate.toISOString().slice(0, 19).replace('T', ' ')
+        due_date: dueDate.toISOString().slice(0, 19).replace('T', ' '),
+        subtasks: Array.isArray(taskData.subtasks) ? taskData.subtasks : [],
       };
 
       if (taskData.taskId) {
@@ -245,7 +246,7 @@ const Dashboard = () => {
       } else {
         // Create new task
         const response = await apiService.createTask(payload);
-        setTasks([...tasks, { ...payload, id: response.id }]);
+        setTasks([...tasks, { ...payload, id: response, taskId: response }]);
       }
 
       setOpenTaskDialog(false);

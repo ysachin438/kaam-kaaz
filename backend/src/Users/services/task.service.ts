@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { tasks } from "src/Users/entities/task.entity";
 import { Repository } from "typeorm";
 import { createTaskDto } from "../dtos/taskdto.dto";
-import sanitizeHtml from 'sanitize-html';
+import * as sanitizeHtml from 'sanitize-html';
 
 @Injectable()
 
