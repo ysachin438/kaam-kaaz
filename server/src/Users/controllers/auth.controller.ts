@@ -32,6 +32,11 @@ export class AuthController {
 
     @Get('csrf-token')
     getCsrfToken(@Req() req: Request, @Res() res: Response) {
+        res.cookie('XSRF-TOKEN', req.csrfToken(), {
+            sameSite: 'none',
+            secure: true,
+            httpOnly: false,
+        });
         res.json({ csrfToken: req.csrfToken() });
     }
 }
