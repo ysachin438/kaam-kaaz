@@ -98,18 +98,18 @@ const StatusChip = styled(Chip)(({ status }) => ({
 const PriorityChip = styled(Chip)(({ priority }) => ({
   backgroundColor: priority === 'high' ? 'rgba(244, 67, 54, 0.2)' :
     priority === 'medium' ? 'rgba(255, 152, 0, 0.2)' :
-    'rgba(76, 175, 80, 0.2)',
+      'rgba(76, 175, 80, 0.2)',
   color: priority === 'high' ? '#f44336' :
     priority === 'medium' ? '#ff9800' :
-    '#4caf50',
+      '#4caf50',
   fontWeight: 'bold',
   boxShadow: priority === 'high' ? '0 0 5px rgba(244, 67, 54, 0.2)' :
     priority === 'medium' ? '0 0 5px rgba(255, 152, 0, 0.2)' :
-    '0 0 5px rgba(76, 175, 80, 0.2)',
+      '0 0 5px rgba(76, 175, 80, 0.2)',
   '&:hover': {
     boxShadow: priority === 'high' ? '0 0 8px rgba(244, 67, 54, 0.3)' :
       priority === 'medium' ? '0 0 8px rgba(255, 152, 0, 0.3)' :
-      '0 0 8px rgba(76, 175, 80, 0.3)',
+        '0 0 8px rgba(76, 175, 80, 0.3)',
   },
   pointerEvents: 'none',
 }));
@@ -275,7 +275,7 @@ const Dashboard = () => {
   const handleEditTask = (task) => {
     // Format the due_date for the date input field (YYYY-MM-DD)
     const dueDate = task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '';
-    
+
     setCurrentTask({
       ...task,
       dueDate: dueDate
@@ -317,7 +317,7 @@ const Dashboard = () => {
 
       await apiService.updateTask(taskId, taskData);
 
-      setTasks(tasks.map(task => 
+      setTasks(tasks.map(task =>
         task.taskId === taskId ? { ...task, status: newStatus } : task
       ));
       setError(null);
@@ -336,7 +336,7 @@ const Dashboard = () => {
 
     // First filter by month if selected
     if (selectedMonth !== 'all') {
-      sortedTasks = sortedTasks.filter(task => 
+      sortedTasks = sortedTasks.filter(task =>
         getMonthName(task.due_date) === selectedMonth
       );
     }
@@ -345,7 +345,7 @@ const Dashboard = () => {
     return sortedTasks.sort((a, b) => {
       const dateA = new Date(a.due_date);
       const dateB = new Date(b.due_date);
-      
+
       if (sortBy === 'newest') {
         return dateB - dateA;
       } else if (sortBy === 'oldest') {
@@ -364,19 +364,16 @@ const Dashboard = () => {
 
   const open = Boolean(profileAnchorEl);
 
-  // Handler to open task details dialog
   const handleTaskClick = (task) => {
     setSelectedTask(task);
     setOpenTaskDetailDialog(true);
   };
 
-  // Handler to close task details dialog
   const handleCloseTaskDetailDialog = () => {
     setOpenTaskDetailDialog(false);
     setSelectedTask(null);
   };
 
-  // Handler for edit from dialog
   const handleEditTaskFromDialog = (task) => {
     setOpenTaskDetailDialog(false);
     setCurrentTask({
@@ -386,13 +383,11 @@ const Dashboard = () => {
     setOpenTaskDialog(true);
   };
 
-  // Handler for delete from dialog
   const handleDeleteTaskFromDialog = async (task) => {
     await handleDeleteTask(task.id || task.taskId);
     setOpenTaskDetailDialog(false);
   };
 
-  // Toggle subtask completion in the selected task (for dialog)
   const handleToggleSubtask = (subtaskIdx) => {
     if (!selectedTask) return;
     setSelectedTask((prev) => {
@@ -401,7 +396,6 @@ const Dashboard = () => {
       );
       return { ...prev, subtasks: newSubtasks };
     });
-    // Also update in main tasks list (for demo, not persisted)
     setTasks((prevTasks) =>
       prevTasks.map((t) =>
         (t.id || t.taskId) === (selectedTask.id || selectedTask.taskId)
@@ -421,7 +415,7 @@ const Dashboard = () => {
               {error}
             </Box>
           )}
-          
+
           {loading ? (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
               <Typography>Loading...</Typography>
@@ -434,7 +428,7 @@ const Dashboard = () => {
             >
               <StyledPaper>
                 <Typography variant="h5" sx={{ color: '#ff5722', mb: 3 }}>My Tasks</Typography>
-                
+
                 <TaskHeader
                   sortBy={sortBy}
                   setSortBy={setSortBy}
@@ -445,8 +439,8 @@ const Dashboard = () => {
                   getUniqueMonths={getUniqueMonths}
                 />
 
-                <TaskTabs 
-                  activeTab={activeTab} 
+                <TaskTabs
+                  activeTab={activeTab}
                   setActiveTab={setActiveTab}
                   tabs={[
                     { value: 'all', label: 'All Tasks' },

@@ -52,7 +52,7 @@ const Signup = () => {
       const response = await axios.post('http://localhost:3000/auth/signup', formData, {
         withCredentials: true
       });
-      
+
       if (response.data) {
         // Redirect to login page after successful signup
         navigate('/login');

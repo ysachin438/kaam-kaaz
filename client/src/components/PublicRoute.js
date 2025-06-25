@@ -25,7 +25,6 @@ const PublicRoute = ({ children }) => {
 
         // console.log('Public Route - Auth response:', response.data);
 
-        // Check if we have a valid response
         if (response.data && response.data !== "Hello world") {
           setIsAuthenticated(true);
         } else {

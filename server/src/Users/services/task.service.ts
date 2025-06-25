@@ -30,24 +30,20 @@ export class TaskServices {
     }
 
     async addTask(userId: number, taskData: createTaskDto) {
-        // Sanitize description
         const cleanDescription = sanitizeHtml(taskData.description || '', {
             allowedTags: [],
             allowedAttributes: {},
         });
-        // Ensure subtasks is always an array (or undefined)
         const task = this.taskRepo.create({ ...taskData, userId: userId, description: cleanDescription, subtasks: taskData.subtasks || [] })
         const result = await this.taskRepo.save(task);
         return result.taskId
     }
 
     async updateTask(taskId: number, taskData: createTaskDto) {
-        // Sanitize description
         const cleanDescription = sanitizeHtml(taskData.description || '', {
             allowedTags: [],
             allowedAttributes: {},
         });
-        // Ensure subtasks is always an array (or undefined)
         await this.taskRepo
             .createQueryBuilder()
             .update('tasks')
