@@ -82,6 +82,10 @@ export const apiService = {
   updateUserProfile: async (userId, profileData) => {
     const response = await api.put(`/users/${userId}/update`, profileData);
     return response.data;
+  },
+
+  fetchCsrfToken: async () => {
+    await api.get('/auth/csrf-token');
   }
 };
 

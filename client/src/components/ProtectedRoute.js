@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children }) => {
 
       try {
         // console.log('Protected Route - Checking auth with token');
-        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/auth/login`, {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/auth/me`, {
           headers: {
             auth_token: `Bearer ${token}`,
           },

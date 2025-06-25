@@ -464,7 +464,7 @@ const Dashboard = () => {
 
           {/* Shared Tasks Section */}
           <AnimatePresence>
-            {showCollaboration && (
+            {/* {showCollaboration && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -474,7 +474,7 @@ const Dashboard = () => {
               >
                 <SharedTasks />
               </motion.div>
-            )}
+            )} */}
           </AnimatePresence>
         </Box>
         {/* Profile Section */}
@@ -485,9 +485,10 @@ const Dashboard = () => {
             </StyledAvatar>
             <Tooltip title="Collaboration">
               <StyledIconButton
-                onClick={() => setShowCollaboration(!showCollaboration)}
+                // onClick={() => setShowCollaboration(!showCollaboration)}
+                disabled
                 sx={{
-                  background: showCollaboration ? 'linear-gradient(45deg, #ff5722 40%, #ff9800 100%)' : 'linear-gradient(45deg, #ff5722 30%, #ff9800 90%)',
+                  background: 'linear-gradient(45deg, #ff5722 30%, #ff9800 90%)',
                 }}
               >
                 <GroupIcon />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -7,6 +7,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import { apiService } from './api';
 
 const theme = createTheme({
   palette: {
@@ -21,6 +22,10 @@ const theme = createTheme({
 });
 
 function App() {
+  useEffect(() => {
+    apiService.fetchCsrfToken();
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

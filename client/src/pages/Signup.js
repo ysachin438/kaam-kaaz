@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { apiService } from '../api';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -49,12 +49,8 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/auth/signup`, formData, {
-        withCredentials: true
-      });
-
-      if (response.data) {
-        // Redirect to login page after successful signup
+      const response = await apiService.signup(formData);
+      if (response) {
         navigate('/login');
       }
     } catch (err) {
