@@ -34,14 +34,14 @@ cd your-repo
 ```
 
 ### 2. **Install Dependencies**
-#### Backend
+#### server
 ```bash
-cd backend
+cd server
 npm install
 ```
-#### Frontend
+#### Client
 ```bash
-cd ../frontend
+cd ../Client
 npm install
 ```
 
@@ -60,25 +60,25 @@ npm install
 - Edit the values to match your local database setup.
 
 #### Frontend
-- (Optional) Create a `.env` file in `frontend` for API URL:
+- (Optional) Create a `.env` file in `client` for API URL:
   ```env
   REACT_APP_API_URL=http://localhost:3000
   ```
 
 ### 4. **Set Up the Database**
 - Create a new database in MySQL/Postgres (matching your `.env` config).
-- Run the migration or manually create tables as per the entities (see `backend/src/Users/entities`).
+- Run the migration or manually create tables as per the entities (see `server/src/Users/entities`).
 
 ### 5. **Start the Backend Server**
 ```bash
-cd backend
+cd server
 npm run start:dev
 ```
 - The backend will run on [http://localhost:3000](http://localhost:3000) by default.
 
 ### 6. **Start the Frontend App**
 ```bash
-cd frontend
+cd client
 npm start
 ```
 - The frontend will run on [http://localhost:3001](http://localhost:3001) by default.
@@ -101,7 +101,7 @@ npm start
 ## Troubleshooting
 - If you see DB errors, check your `.env` and DB connection.
 - If you see CORS errors, check your backend CORS config.
-- If you see `Module not found: dompurify`, run `npm install dompurify` in the `frontend` directory.
+- If you see `Module not found: dompurify`, run `npm install dompurify` in the `client` directory.
 
 ---
 
