@@ -8,6 +8,7 @@ import { mysqlConfig } from "./config/database.config"
 import { MongooseModule } from '@nestjs/mongoose'
 import { taskSchema, userSchema } from './Users/schemas/user.schema';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+
 @Module({
   imports: [
     /********************************************-| MONGOOSE DATABASE CONNECTION |-******************************************************** */

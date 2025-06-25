@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { CreateUserDto, UserDataDto, UpdateUserDto } from "src/Users/dtos/userdto.dto";
 import { users } from "src/Users/entities/user.entity";
 import { Repository } from "typeorm";
+import * as sanitizeHtml from 'sanitize-html';
 
 @Injectable()
 
@@ -20,16 +21,32 @@ export class UserServices {
     }
 
     async addUser(userData: CreateUserDto) {
-        const user = this.userRepo.create(userData)
+        const sanitizedData = {
+            ...userData,
+            name: sanitizeHtml(userData.name, { allowedTags: [], allowedAttributes: {} }),
+            email: sanitizeHtml(userData.email, { allowedTags: [], allowedAttributes: {} }),
+            gender: sanitizeHtml(userData.gender, { allowedTags: [], allowedAttributes: {} }),
+        };
+        const user = this.userRepo.create(sanitizedData)
         return await this.userRepo.save(user);
     }
 
     async updateUser(userId: number, userData: UpdateUserDto) {
         try {
+            const sanitizedUserData = { ...userData };
+            if (sanitizedUserData.name) {
+                sanitizedUserData.name = sanitizeHtml(sanitizedUserData.name, { allowedTags: [], allowedAttributes: {} });
+            }
+            if (sanitizedUserData.email) {
+                sanitizedUserData.email = sanitizeHtml(sanitizedUserData.email, { allowedTags: [], allowedAttributes: {} });
+            }
+            if (sanitizedUserData.gender) {
+                sanitizedUserData.gender = sanitizeHtml(sanitizedUserData.gender, { allowedTags: [], allowedAttributes: {} });
+            }
             await this.userRepo
                 .createQueryBuilder()
                 .update('users')
-                .set(userData)
+                .set(sanitizedUserData)
                 .where('userId = :userId', { userId: userId })
                 .execute();
             return await this.userRepo.findOne({ where: { userId: userId } })
