@@ -10,25 +10,24 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
-      // console.log('Protected Route - Token:', token);
+      // console.log('ProtectedRoute - token:', token);
 
       if (!token) {
-        // console.log('Protected Route - No token found');
         setIsAuthenticated(false);
         return;
       }
 
       try {
-        // console.log('Protected Route - Checking auth with token');
-        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}auth/me`, {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/auth/me`, {
           headers: {
             auth_token: `Bearer ${token}`,
           },
           withCredentials: true
         });
+        // console.log('ProtectedRoute - /auth/me response:', response.data);
 
-        // Check if we have a valid response
-        if (response.data) {
+        // Only authenticate if userId is present in the response
+        if (response.data && response.data.userId) {
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
@@ -36,6 +35,7 @@ const ProtectedRoute = ({ children }) => {
           localStorage.removeItem('userId');
         }
       } catch (error) {
+        // console.error('ProtectedRoute - /auth/me error:', error.response ? error.response.data : error);
         setIsAuthenticated(false);
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
