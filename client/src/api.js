@@ -1,29 +1,33 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000';
-
-// Create axios instance with default config
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true, // Important for CORS with credentials
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
+    baseURL: 'http://localhost:3000', // Restored your original base URL
+    withCredentials: true,
 });
 
-// Add request interceptor to add auth token
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['auth_token'] = `Bearer ${token}`;
+    (config) => {
+        const authToken = localStorage.getItem('token');
+        if (authToken) {
+            config.headers['auth_token'] = `Bearer ${authToken}`;
+        }
+
+        const getCookie = (name) => {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+        
+        const csrfToken = getCookie('XSRF-TOKEN');
+        if (csrfToken) {
+            config.headers['X-XSRF-TOKEN'] = csrfToken;
+        }
+
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
 );
 
 // Add response interceptor for error handling
