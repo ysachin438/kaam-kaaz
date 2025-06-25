@@ -9,7 +9,12 @@ async function bootstrap() {
   
   //------------------------ CORS Activation ---------------------------------------
   app.enableCors({
-    origin: ['http://localhost:3001', 'http://localhost:3000',  'https://kaam-kaaz-fskq.vercel.app'],
+    origin: [
+      'https://kaam-kaaz-fskq.vercel.app', // Vercel frontend
+      'http://localhost:3000',             // local backend (optional)
+      'http://localhost:3001',             // local frontend (optional)
+    ],
+    credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: [
       'Content-Type',
@@ -23,7 +28,6 @@ async function bootstrap() {
       'X-XSRF-TOKEN',
     ],
     exposedHeaders: ['auth_token'],
-    credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204,
   });
@@ -31,10 +35,11 @@ async function bootstrap() {
   app.use(cookieParser());
 
   const csrfProtection = csurf({
-    cookie: { 
-      key: '_csrf', 
-      sameSite: true, 
-      httpOnly: true 
+    cookie: {
+      key: '_csrf',
+      sameSite: 'none', // Important for cross-origin
+      secure: true,     // Important for HTTPS
+      httpOnly: false,  // Must be false so frontend JS can read it
     },
     value: (req: Request) => {
       const token = req.headers['x-xsrf-token'];
@@ -47,15 +52,27 @@ async function bootstrap() {
   
   app.use((req, res, next) => {
     if (req.method === 'GET') {
-      csurf({ cookie: true, value: (req: Request) => req.headers['x-xsrf-token'] as string })(req, res, () => {
-         res.cookie('XSRF-TOKEN', req.csrfToken(), { sameSite: true });
-         next();
+      csurf({
+        cookie: {
+          key: '_csrf',
+          sameSite: 'none',
+          secure: true,
+          httpOnly: false,
+        },
+        value: (req: Request) => req.headers['x-xsrf-token'] as string,
+      })(req, res, () => {
+        res.cookie('XSRF-TOKEN', req.csrfToken(), {
+          sameSite: 'none',
+          secure: true,
+          httpOnly: false,
+        });
+        next();
       });
     } else {
       csrfProtection(req, res, next);
     }
   });
 
-  await app.listen(process.env.PORT || 3000);
+  await app.listen(process.env.PORT || 3000, '0.0.0.0');
 }
 bootstrap();
