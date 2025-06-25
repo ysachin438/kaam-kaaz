@@ -50,40 +50,37 @@ export const apiService = {
     const response = await api.post('/auth/login', credentials);
     return response.data;
   },
-
+  signup: async (formData) => {
+    const response = await api.post('/auth/signup', formData);
+    return response.data;
+  },
   // Tasks
   getTasks: async (status = null) => {
     const url = status ? `/tasks?status=${status}` : '/tasks';
     const response = await api.get(url);
     return response.data;
   },
-
   createTask: async (taskData) => {
     const response = await api.post('/tasks/create', taskData);
     return response.data;
   },
-
   updateTask: async (taskId, taskData) => {
     const response = await api.put(`/tasks/${taskId}/update`, taskData);
     return response.data;
   },
-
   deleteTask: async (taskId) => {
     const response = await api.delete(`/tasks/${taskId}/delete`);
     return response.data;
   },
-
   // Users
   getUserProfile: async (userId) => {
     const response = await api.get(`/users/${userId}`);
     return response.data;
   },
-
   updateUserProfile: async (userId, profileData) => {
     const response = await api.put(`/users/${userId}/update`, profileData);
     return response.data;
   },
-
   fetchCsrfToken: async () => {
     await api.get('/auth/csrf-token');
   }
