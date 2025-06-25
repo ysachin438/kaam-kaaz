@@ -1,8 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
-import * as csurf from 'csurf';
-import { Request } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -35,44 +33,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  const csrfProtection = csurf({
-    cookie: {
-      key: '_csrf',
-      sameSite: 'none', // Important for cross-origin
-      secure: true,     // Important for HTTPS
-      httpOnly: false,  // Must be false so frontend JS can read it
-    },
-    value: (req: Request) => {
-      const token = req.headers['x-xsrf-token'];
-      if (typeof token === 'string') {
-        return token;
-      }
-      return '';
-    },
-  });
-  
-  app.use((req, res, next) => {
-    if (req.method === 'GET') {
-      csurf({
-        cookie: {
-          key: '_csrf',
-          sameSite: 'none',
-          secure: true,
-          httpOnly: false,
-        },
-        value: (req: Request) => req.headers['x-xsrf-token'] as string,
-      })(req, res, () => {
-        res.cookie('XSRF-TOKEN', req.csrfToken(), {
-          sameSite: 'none',
-          secure: true,
-          httpOnly: false,
-        });
-        next();
-      });
-    } else {
-      csrfProtection(req, res, next);
-    }
-  });
+  // CSRF protection is temporarily disabled for development/testing
 
   await app.listen(process.env.PORT || 3000, '0.0.0.0');
 }
