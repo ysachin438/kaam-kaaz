@@ -10,7 +10,8 @@ async function bootstrap() {
   //------------------------ CORS Activation ---------------------------------------
   app.enableCors({
     origin: [
-      'https://kaam-kaaz-fskq.vercel.app', // Vercel frontend
+      'https://kaam-kaaz-1.onrender.com', // Render frontend
+      'https://kaam-kaaz.onrender.com',   // Render backend (optional)
       'http://localhost:3000',             // local backend (optional)
       'http://localhost:3001',             // local frontend (optional)
     ],
