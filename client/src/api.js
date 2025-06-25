@@ -1,36 +1,35 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:3000', // Restored your original base URL
-    withCredentials: true,
+  baseURL: 'http://localhost:3000',
+  withCredentials: true,
 });
 
 api.interceptors.request.use(
-    (config) => {
-        const authToken = localStorage.getItem('token');
-        if (authToken) {
-            config.headers['auth_token'] = `Bearer ${authToken}`;
-        }
-
-        const getCookie = (name) => {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
-        
-        const csrfToken = getCookie('XSRF-TOKEN');
-        if (csrfToken) {
-            config.headers['X-XSRF-TOKEN'] = csrfToken;
-        }
-
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+  (config) => {
+    const authToken = localStorage.getItem('token');
+    if (authToken) {
+      config.headers['auth_token'] = `Bearer ${authToken}`;
     }
+
+    const getCookie = (name) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    const csrfToken = getCookie('XSRF-TOKEN');
+    if (csrfToken) {
+      config.headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-// Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -58,28 +57,28 @@ export const apiService = {
     const response = await api.get(url);
     return response.data;
   },
-  
+
   createTask: async (taskData) => {
     const response = await api.post('/tasks/create', taskData);
     return response.data;
   },
-  
+
   updateTask: async (taskId, taskData) => {
     const response = await api.put(`/tasks/${taskId}/update`, taskData);
     return response.data;
   },
-  
+
   deleteTask: async (taskId) => {
     const response = await api.delete(`/tasks/${taskId}/delete`);
     return response.data;
   },
-  
+
   // Users
   getUserProfile: async (userId) => {
     const response = await api.get(`/users/${userId}`);
     return response.data;
   },
-  
+
   updateUserProfile: async (userId, profileData) => {
     const response = await api.put(`/users/${userId}/update`, profileData);
     return response.data;

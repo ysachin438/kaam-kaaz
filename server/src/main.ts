@@ -47,14 +47,11 @@ async function bootstrap() {
   
   app.use((req, res, next) => {
     if (req.method === 'GET') {
-      // For GET requests, we just set the cookie.
-      // We create a temporary middleware function from csurf to do this.
       csurf({ cookie: true, value: (req: Request) => req.headers['x-xsrf-token'] as string })(req, res, () => {
          res.cookie('XSRF-TOKEN', req.csrfToken(), { sameSite: true });
          next();
       });
     } else {
-      // For other methods, apply full CSRF protection.
       csrfProtection(req, res, next);
     }
   });

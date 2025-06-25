@@ -62,7 +62,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     try {
       setLoading(true);
       const response = await apiService.login({ email, password });
@@ -71,13 +71,13 @@ const Login = () => {
         // Store auth data
         localStorage.setItem('token', response.token);
         localStorage.setItem('userId', response.userId);
-        
+
         // // Debug logging
         // console.log('Login successful:', {
         //   token: response.token,
         //   userId: response.userId
         // });
-        
+
         // Navigate to dashboard
         navigate('/dashboard', { replace: true });
       } else {
@@ -86,8 +86,8 @@ const Login = () => {
     } catch (error) {
       console.error('Login error:', error);
       setError(
-        error.response?.data?.message || 
-        error.message || 
+        error.response?.data?.message ||
+        error.message ||
         'Login failed. Please try again.'
       );
     } finally {
@@ -102,7 +102,6 @@ const Login = () => {
     } else if (name === 'password') {
       setPassword(value);
     }
-    // Clear error when user starts typing
     if (error) setError('');
   };
 
@@ -120,7 +119,7 @@ const Login = () => {
   }
 
   if (isAuthenticated) {
-    return null; // Will be redirected to dashboard
+    return null;
   }
 
   return (
