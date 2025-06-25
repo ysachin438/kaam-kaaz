@@ -8,6 +8,7 @@ import { mysqlConfig } from "./config/database.config"
 import { MongooseModule } from '@nestjs/mongoose'
 import { taskSchema, userSchema } from './Users/schemas/user.schema';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     UserModule,
     AuthModule
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule { }
