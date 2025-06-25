@@ -13,6 +13,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../api';
+import axios from 'axios';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -49,12 +50,19 @@ const Signup = () => {
     setLoading(true);
 
     try {
+      // Fetch CSRF token before signup
+      await axios.get(`${process.env.REACT_APP_API_BASE_URL}/auth/csrf-token`, { withCredentials: true });
       const response = await apiService.signup(formData);
       if (response) {
         navigate('/login');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Signup failed. Please try again.');
+      console.error('Signup error:', err.response ? err.response.data : err);
+      setError(
+        err.response?.data?.message ||
+        err.message ||
+        'Signup failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
