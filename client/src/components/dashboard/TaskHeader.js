@@ -1,88 +1,69 @@
 import React from 'react';
 import {
   Box,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Typography,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Group as GroupIcon,
+  Brightness4 as Brightness4Icon,
+  Brightness7 as Brightness7Icon,
+} from '@mui/icons-material';
+import { StyledAvatar, StyledIconButton } from './StyledComponents';
 
 const TaskHeader = ({
-  sortBy,
-  setSortBy,
-  selectedMonth,
-  setSelectedMonth,
-  tasks,
+  profile,
+  onProfileClick,
   onAddTask,
-  getUniqueMonths,
+  onToggleTheme,
+  onToggleCollaboration,
+  isMobile,
 }) => {
   return (
-    <Box display="flex" justifyContent="flex-end" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
-      <FormControl size="small" sx={{ minWidth: 120 }}>
-        <InputLabel sx={{ color: 'rgba(255, 87, 34, 0.7)' }}>Sort By</InputLabel>
-        <Select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          label="Sort By"
-          sx={{
-            color: '#ff5722',
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'rgba(255, 87, 34, 0.3)',
-            },
-            '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'rgba(255, 87, 34, 0.5)',
-            },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#ff5722',
-            },
-          }}
-        >
-          <MenuItem value="newest">Newest First</MenuItem>
-          <MenuItem value="oldest">Oldest First</MenuItem>
-        </Select>
-      </FormControl>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        p: 2,
+        mb: 2,
+        flexWrap: 'wrap',
+        gap: 2,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <StyledAvatar onClick={onProfileClick}>
+          {profile.avatar}
+        </StyledAvatar>
+        {!isMobile && (
+          <Box>
+            <Typography variant="h6" sx={{ color: '#fff' }}>
+              {profile.name}
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
+              {profile.email}
+            </Typography>
+          </Box>
+        )}
+      </Box>
 
-      <FormControl size="small" sx={{ minWidth: 120 }}>
-        <InputLabel sx={{ color: 'rgba(255, 87, 34, 0.7)' }}>Filter Month</InputLabel>
-        <Select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-          label="Filter Month"
-          sx={{
-            color: '#ff5722',
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'rgba(255, 87, 34, 0.3)',
-            },
-            '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'rgba(255, 87, 34, 0.5)',
-            },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#ff5722',
-            },
-          }}
-        >
-          <MenuItem value="all">All Months</MenuItem>
-          {getUniqueMonths(tasks).filter(month => month !== 'all').map((month) => (
-            <MenuItem key={month} value={month}>
-              {month.charAt(0).toUpperCase() + month.slice(1)}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <Button
-        variant="contained"
-        startIcon={<AddIcon />}
-        onClick={onAddTask}
-        sx={{
-          background: 'linear-gradient(45deg, #ff5722 30%, #ff9800 90%)',
-          color: '#fff',
-        }}
-      >
-        Add Task
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <StyledIconButton onClick={onAddTask}>
+          <AddIcon />
+        </StyledIconButton>
+        <Tooltip title="Toggle Theme">
+          <IconButton onClick={onToggleTheme} sx={{ color: '#fff' }}>
+            <Brightness4Icon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Collaboration">
+          <IconButton onClick={onToggleCollaboration} sx={{ color: '#fff' }}>
+            <GroupIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
     </Box>
   );
 };

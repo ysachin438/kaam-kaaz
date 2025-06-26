@@ -19,6 +19,9 @@ import {
   InputLabel,
   IconButton,
   Tooltip,
+  useMediaQuery,
+  useTheme,
+  CircularProgress,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -49,6 +52,9 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   '&:hover': {
     boxShadow: '0 0 15px rgba(255, 87, 34, 0.15)',
   },
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+  },
 }));
 
 const TaskItem = styled(ListItem)(({ theme }) => ({
@@ -65,6 +71,11 @@ const TaskItem = styled(ListItem)(({ theme }) => ({
     boxShadow: '0 0 12px rgba(255, 87, 34, 0.1)',
     transform: 'translateY(-2px)',
     transition: 'all 0.3s ease',
+  },
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(1.5),
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
 }));
 
@@ -151,6 +162,8 @@ const Dashboard = () => {
   const [openTaskDetailDialog, setOpenTaskDetailDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Get userId from localStorage or your auth context
   const userId = localStorage.getItem('userId');
@@ -360,7 +373,7 @@ const Dashboard = () => {
     return ['all', ...new Set(months)];
   };
 
-  const filteredAndSortedTasks = sortTasks(tasks);
+  const filteredTasks = sortTasks(tasks);
 
   const open = Boolean(profileAnchorEl);
 
@@ -406,61 +419,218 @@ const Dashboard = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box display="flex" alignItems="flex-start" gap={3}>
-        {/* Main Content */}
-        <Box flex={1}>
-          {error && (
-            <Box sx={{ mb: 2, p: 2, bgcolor: 'error.main', color: 'white', borderRadius: 1 }}>
-              {error}
-            </Box>
-          )}
+    <Container
+      maxWidth="xl"
+      sx={{
+        py: { xs: 3, md: 5 },
+        px: { xs: 2, md: 4 },
+        mt: 4,
+      }}
+    >
+      {loading ? (
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          sx={{ minHeight: '50vh', color: '#fff' }}
+        >
+          <CircularProgress color="inherit" />
+        </Box>
+      ) : error ? (
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          sx={{ minHeight: '50vh', color: 'red' }}
+        >
+          <Typography>{error}</Typography>
+        </Box>
+      ) : (
+        <>
+          <StyledPaper>
+            <TaskHeader
+              profile={profile}
+              onProfileClick={handleProfileClick}
+              onAddTask={handleAddTask}
+              onToggleTheme={() => {
+                /* Implement theme toggle logic */
+              }}
+              onToggleCollaboration={() => setShowCollaboration(!showCollaboration)}
+              isMobile={isMobile}
+            />
 
-          {loading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-              <Typography>Loading...</Typography>
-            </Box>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
+            <Popover
+              open={Boolean(profileAnchorEl)}
+              anchorEl={profileAnchorEl}
+              onClose={handleProfileClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
             >
-              <StyledPaper>
-                <Typography variant="h5" sx={{ color: '#ff5722', mb: 3 }}>My Tasks</Typography>
+              <Box sx={{ p: 2, minWidth: 200 }}>
+                <Typography variant="h6" sx={{ color: '#ff5722', mb: 1 }}>
+                  {profile.name}
+                </Typography>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  {profile.email}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={() => {
+                    handleProfileClose();
+                    setOpenProfileDialog(true);
+                  }}
+                  sx={{
+                    mt: 2,
+                    borderColor: 'rgba(255, 87, 34, 0.3)',
+                    color: '#ff5722',
+                    '&:hover': {
+                      borderColor: '#ff5722',
+                      boxShadow: '0 0 8px rgba(255, 87, 34, 0.2)',
+                    },
+                  }}
+                >
+                  Edit Profile
+                </Button>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={() => {
+                    handleProfileClose();
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userId');
+                    navigate('/login');
+                  }}
+                  sx={{
+                    mt: 1,
+                    borderColor: 'rgba(233, 30, 99, 0.3)',
+                    color: '#e91e63',
+                    '&:hover': {
+                      borderColor: '#e91e63',
+                      boxShadow: '0 0 8px rgba(233, 30, 99, 0.2)',
+                    },
+                  }}
+                >
+                  Logout
+                </Button>
+              </Box>
+            </Popover>
 
-                <TaskHeader
-                  sortBy={sortBy}
-                  setSortBy={setSortBy}
-                  selectedMonth={selectedMonth}
-                  setSelectedMonth={setSelectedMonth}
-                  tasks={tasks}
-                  onAddTask={handleAddTask}
-                  getUniqueMonths={getUniqueMonths}
-                />
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: isMobile ? 'stretch' : 'center',
+                flexDirection: isMobile ? 'column' : 'row',
+                my: 4,
+                gap: 2,
+              }}
+            >
+              <Typography
+                variant={isMobile ? 'h5' : 'h4'}
+                sx={{
+                  color: '#ff5722',
+                  fontWeight: 'bold',
+                  textAlign: isMobile ? 'center' : 'left',
+                }}
+              >
+                {activeTab === 'all'
+                  ? 'All Tasks'
+                  : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  justifyContent: isMobile ? 'center' : 'flex-end',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel sx={{ color: 'rgba(255, 87, 34, 0.7)' }}>Sort By</InputLabel>
+                  <Select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    label="Sort By"
+                    sx={{
+                      color: '#fff',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255, 87, 34, 0.3)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255, 87, 34, 0.5)',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#ff5722',
+                      },
+                      '& .MuiSvgIcon-root': {
+                        color: 'rgba(255, 87, 34, 0.7)',
+                      },
+                    }}
+                  >
+                    <MenuItem value="newest">Newest</MenuItem>
+                    <MenuItem value="oldest">Oldest</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel sx={{ color: 'rgba(255, 87, 34, 0.7)' }}>Month</InputLabel>
+                  <Select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    label="Month"
+                    sx={{
+                      color: '#fff',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255, 87, 34, 0.3)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255, 87, 34, 0.5)',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#ff5722',
+                      },
+                      '& .MuiSvgIcon-root': {
+                        color: 'rgba(255, 87, 34, 0.7)',
+                      },
+                    }}
+                  >
+                    {getUniqueMonths(tasks).map((month) => (
+                      <MenuItem key={month} value={month}>{month}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
 
-                <TaskTabs
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  tabs={[
-                    { value: 'all', label: 'All Tasks' },
-                    { value: 'pending', label: 'Pending Tasks' },
-                    { value: 'inprogress', label: 'In Progress' },
-                    { value: 'completed', label: 'Completed Tasks' }
-                  ]}
-                />
+            <TaskTabs
+              activeTab={activeTab}
+              onTabChange={(e, newTab) => setActiveTab(newTab)}
+              isMobile={isMobile}
+              tabs={[
+                { value: 'all', label: 'All Tasks' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'inprogress', label: 'In Progress' },
+                { value: 'completed', label: 'Completed' },
+              ]}
+            />
 
-                <TaskList
-                  tasks={filteredAndSortedTasks}
-                  onEditTask={handleEditTask}
-                  onDeleteTask={handleDeleteTask}
-                  onStatusChange={handleTaskStatusChange}
-                  activeTab={activeTab}
-                  onTaskClick={handleTaskClick}
-                />
-              </StyledPaper>
-            </motion.div>
-          )}
+            <AnimatePresence>
+              <TaskList
+                tasks={sortTasks(filteredTasks)}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+                onStatusChange={handleTaskStatusChange}
+                onTaskClick={handleTaskClick}
+                isMobile={isMobile}
+              />
+            </AnimatePresence>
+          </StyledPaper>
 
           {/* Shared Tasks Section */}
           <AnimatePresence>
@@ -476,95 +646,14 @@ const Dashboard = () => {
               </motion.div>
             )} */}
           </AnimatePresence>
-        </Box>
-        {/* Profile Section */}
-        <Box minWidth={280} maxWidth={340}>
-          <Box display="flex" justifyContent="flex-end" mb={2} alignItems="center" gap={1}>
-            <StyledAvatar onClick={handleProfileClick}>
-              {profile.avatar}
-            </StyledAvatar>
-            <Tooltip title="Collaboration">
-              <StyledIconButton
-                // onClick={() => setShowCollaboration(!showCollaboration)}
-                disabled
-                sx={{
-                  background: 'linear-gradient(45deg, #ff5722 30%, #ff9800 90%)',
-                }}
-              >
-                <GroupIcon />
-              </StyledIconButton>
-            </Tooltip>
-          </Box>
-          <Popover
-            open={open}
-            anchorEl={profileAnchorEl}
-            onClose={handleProfileClose}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-          >
-            <Box sx={{ p: 2, minWidth: 200 }}>
-              <Typography variant="h6" sx={{ color: '#ff5722', mb: 1 }}>
-                {profile.name}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                {profile.email}
-              </Typography>
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={() => {
-                  handleProfileClose();
-                  setOpenProfileDialog(true);
-                }}
-                sx={{
-                  mt: 2,
-                  borderColor: 'rgba(255, 87, 34, 0.3)',
-                  color: '#ff5722',
-                  '&:hover': {
-                    borderColor: '#ff5722',
-                    boxShadow: '0 0 8px rgba(255, 87, 34, 0.2)',
-                  },
-                }}
-              >
-                Edit Profile
-              </Button>
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={() => {
-                  handleProfileClose();
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('userId');
-                  navigate('/login');
-                }}
-                sx={{
-                  mt: 1,
-                  borderColor: 'rgba(233, 30, 99, 0.3)',
-                  color: '#e91e63',
-                  '&:hover': {
-                    borderColor: '#e91e63',
-                    boxShadow: '0 0 8px rgba(233, 30, 99, 0.2)',
-                  },
-                }}
-              >
-                Logout
-              </Button>
-            </Box>
-          </Popover>
-        </Box>
-      </Box>
+        </>
+      )}
 
       {/* Task Detail Dialog */}
       <TaskDetailDialog
         open={openTaskDetailDialog}
-        task={selectedTask}
         onClose={handleCloseTaskDetailDialog}
+        task={selectedTask}
         onEdit={handleEditTaskFromDialog}
         onDelete={handleDeleteTaskFromDialog}
         onToggleSubtask={handleToggleSubtask}
@@ -585,7 +674,6 @@ const Dashboard = () => {
         open={openProfileDialog}
         onClose={() => setOpenProfileDialog(false)}
         profile={profile}
-        setProfile={setProfile}
         onSave={handleUpdateProfile}
       />
     </Container>

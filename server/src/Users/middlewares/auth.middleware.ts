@@ -11,7 +11,6 @@ export class AuthMiddleware implements NestMiddleware{
                 throw new UnauthorizedException('No auth token provided')
             }
 
-            // Remove 'Bearer ' prefix if present
             const token = authHeader.replace('Bearer ', '')
             
             const decoded = verifyToken(token)
@@ -19,7 +18,6 @@ export class AuthMiddleware implements NestMiddleware{
                 throw new UnauthorizedException('Invalid token')
             }
 
-            // Add decoded user info to request for use in controllers
             (req as any).user = decoded
             
             next()

@@ -20,12 +20,14 @@ const StyledTab = styled(Tab)(({ theme }) => ({
   },
 }));
 
-const TaskTabs = ({ activeTab, setActiveTab, tabs }) => {
+const TaskTabs = ({ activeTab, onTabChange, tabs, isMobile }) => {
   return (
     <StyledTabs
       value={activeTab}
-      onChange={(e, newValue) => setActiveTab(newValue)}
+      onChange={onTabChange}
       aria-label="task status tabs"
+      variant={isMobile ? 'scrollable' : 'standard'}
+      scrollButtons="auto"
     >
       {tabs.map((tab) => (
         <StyledTab

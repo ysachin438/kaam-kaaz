@@ -13,10 +13,11 @@ import { TaskItem, StatusChip, PriorityChip } from './StyledComponents';
 const TaskList = ({ 
   tasks, 
   onStatusChange, 
-  onEditTask, 
-  onDeleteTask,
+  onEdit, 
+  onDelete,
   activeTab,
-  onTaskClick
+  onTaskClick,
+  isMobile,
 }) => {
   if (!tasks || tasks.length === 0) {
     return (
@@ -86,7 +87,8 @@ const TaskList = ({
                     paragraph
                     sx={{
                       textDecoration: task.status === 'completed' ? 'line-through' : 'none',
-                      opacity: task.status === 'completed' ? 0.7 : 1
+                      opacity: task.status === 'completed' ? 0.7 : 1,
+                      wordBreak: 'break-word',
                     }}
                   >
                     {task.description}
@@ -119,7 +121,7 @@ const TaskList = ({
                 <IconButton
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditTask(task);
+                    onEdit(task);
                   }}
                   size="small"
                   sx={{ color: 'rgba(255, 87, 34, 0.7)' }}
@@ -129,7 +131,7 @@ const TaskList = ({
                 <IconButton
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDeleteTask(task.taskId);
+                    onDelete(task.taskId);
                   }}
                   size="small"
                   sx={{ color: 'rgba(233, 30, 99, 0.7)' }}

@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles';
-import { Paper, ListItem, Avatar, Chip } from '@mui/material';
+import { Paper, ListItem, Avatar, Chip, IconButton } from '@mui/material';
 
 export const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -73,4 +73,15 @@ export const PriorityChip = styled(Chip)(({ priority }) => ({
       '0 0 8px rgba(76, 175, 80, 0.3)',
   },
   pointerEvents: 'none',
+}));
+
+export const StyledIconButton = styled(IconButton)(({ theme }) => ({
+  background: 'linear-gradient(45deg, #ff5722 30%, #ff9800 90%)',
+  color: '#fff',
+  padding: '12px',
+  marginLeft: '8px',
+  '&:hover': {
+    background: 'linear-gradient(45deg, #ff5722 40%, #ff9800 100%)',
+    boxShadow: '0 0 15px rgba(255, 87, 34, 0.3)',
+  },
 })); 

@@ -21,6 +21,9 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   border: '1px solid rgba(255, 87, 34, 0.1)',
   maxWidth: '400px',
   margin: '0 auto',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(3),
+  },
 }));
 
 const Login = () => {
@@ -118,14 +121,18 @@ const Login = () => {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
+    <Container maxWidth="sm" sx={{ mt: { xs: 4, sm: 8 } }}>
       <StyledPaper>
         <Typography
           variant="h4"
           component="h1"
           align="center"
           gutterBottom
-          sx={{ color: '#ff5722', mb: 4 }}
+          sx={{
+            color: '#ff5722',
+            mb: { xs: 3, sm: 4 },
+            fontSize: { xs: '1.75rem', sm: '2.125rem' },
+          }}
         >
           Welcome Back
         </Typography>

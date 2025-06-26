@@ -31,7 +31,6 @@ api.interceptors.response.use(
   }
 );
 
-// API service functions
 export const apiService = {
   // Auth
   login: async (credentials) => {
