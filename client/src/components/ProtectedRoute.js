@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
 import { Box, CircularProgress } from '@mui/material';
+import { apiService } from '../api';
 
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -10,24 +10,16 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
-      // console.log('ProtectedRoute - token:', token);
+      const userId = localStorage.getItem('userId');
 
-      if (!token) {
+      if (!token || !userId) {
         setIsAuthenticated(false);
         return;
       }
 
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/auth/me`, {
-          headers: {
-            auth_token: `Bearer ${token}`,
-          },
-          withCredentials: true
-        });
-        // console.log('ProtectedRoute - /auth/me response:', response.data);
-
-        // Only authenticate if userId is present in the response
-        if (response.data && response.data.userId) {
+        const userProfile = await apiService.getUserProfile(userId);
+        if (userProfile) {
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
@@ -35,7 +27,6 @@ const ProtectedRoute = ({ children }) => {
           localStorage.removeItem('userId');
         }
       } catch (error) {
-        // console.error('ProtectedRoute - /auth/me error:', error.response ? error.response.data : error);
         setIsAuthenticated(false);
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
