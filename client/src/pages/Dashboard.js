@@ -674,6 +674,7 @@ const Dashboard = () => {
         open={openProfileDialog}
         onClose={() => setOpenProfileDialog(false)}
         profile={profile}
+        setProfile={setProfile}
         onSave={handleUpdateProfile}
       />
     </Container>
