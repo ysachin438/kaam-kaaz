@@ -30,7 +30,7 @@ This is a modern fullstack Task Manager application built with:
 ```bash
 # Clone the repo
 https://github.com/ysachin438/kaam-kaaz.git
-cd your-repo
+cd kaam-kaaz
 ```
 
 ### 2. **Install Dependencies**
